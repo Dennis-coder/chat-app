@@ -39,99 +39,95 @@
 <script>
 import axios from "axios";
 import Message from "../components/Message.vue";
+import { ref, nextTick } from 'vue'
+import { useStore } from 'vuex'
+import { useRoute } from 'vue-router'
 
 export default {
   components: {
     Message,
   },
-  data() {
-    return {
-      friendData: null,
-      messages: null,
-      text: "",
-      messagesHeight: 0,
-      loadingMessages: true
-    };
-  },
-  async created() {
-    if (this.$store.state.friends.length > 0) {
-      this.friendData = this.$store.state.friends.find(
-        (friend) => (friend.id = this.$route.params.id)
-      );
-    } else {
-      this.friendData = (
+  setup() {
+    const friend = ref(null)
+    const messages = ref(null)
+    const messagesDiv = ref(null)
+    
+    const text = ref('')
+    const messagesHeight = ref(0)
+    const loadingMessages = ref(true)
+
+    const route = useRoute()
+    const store = useStore()
+    const user = ref(store.state.userModule.user)
+    const socket = ref(store.state.socket)
+
+
+    const loadData = async function() {
+      if (store.state.friends.length > 0) {
+        friend.value = store.state.friends.find(
+          (friend) => (friend.id = route.params.id)
+        );
+      } else {
+        friend.value = (
+          await axios.get(
+            "/api/v1/friend?" +
+              new URLSearchParams({
+                friend_id: route.params.id,
+                user_id: user.value.id,
+              })
+          )
+        ).data;
+      }
+      messages.value = (
         await axios.get(
-          "/api/v1/friend?" +
+          "/api/v1/message/all?" +
             new URLSearchParams({
-              friend_id: this.$route.params.id,
-              user_id: this.user.id,
+              friend_id: route.params.id,
+              user_id: user.value.id,
             })
         )
       ).data;
+  
+      loadingMessages.value = false
     }
-    this.messages = (
-      await axios.get(
-        "/api/v1/message/all?" +
-          new URLSearchParams({
-            friend_id: this.$route.params.id,
-            user_id: this.user.id,
-          })
-      )
-    ).data;
-    this.loadingMessages = false
-    this.socket.on(`user-${this.user.id}`, function(newMessage) {
-      console.log(user)
-      this.messages.push(newMessage)
-    });
-  },
-  mounted() {
-    this.$nextTick(() => {
-      window.addEventListener("resize", this.resizeEvent);
-      this.resizeEvent();
-      this.scrollDown();
-    });
-  },
-  computed: {
-    user() {
-      return this.$store.state.userModule.user;
-    },
 
-    friend() {
-      return this.friendData ? this.friendData : null;
-    },
-
-    socket() {
-      return this.$store.state.socket;
-    }
-  },
-  methods: {
-    async sendMessage() {
+    const sendMessage = async function() {
       let newMessage = (
         await axios.post("/api/v1/message", {
-          text: this.text,
-          sender_id: this.user.id,
-          reciever_id: this.friend.id,
+          text: text.value,
+          sender_id: user.value.id,
+          reciever_id: friend.value.id,
         })
       ).data;
-      this.messages.push(newMessage);
-      this.$store.dispatch('emitSocketEvent', { event: "chat message", args: { event: `user-${this.friend.id}`, message: newMessage } })
-      this.text = "";
-      this.scrollDown()
-    },
+      messages.value.push(newMessage);
+      store.dispatch('emitSocketEvent', { event: "chat message", args: { event: `user-${friend.value.id}`, data: newMessage } })
+      text.value = "";
+      scrollDown()
+    }
 
-    resizeEvent() {
-      this.messagesHeight = window.innerHeight - 48;
-    },
-    async scrollDown() {
-      this.$nextTick(async () => {
-        if (this.$refs.messagesDiv) {
-        this.$refs.messagesDiv.scrollTop = this.$refs.messagesDiv.scrollHeight;
+    const resizeEvent = function() {
+      messagesHeight.value = window.innerHeight - 48;
+    }
+
+    const scrollDown = async function() {
+      nextTick(async () => {
+        if (messagesDiv.value) {
+        messagesDiv.value.scrollTop = messagesDiv.value.scrollHeight;
       } else {
         await new Promise((r) => setTimeout(r, 50));
-        this.scrollDown();
+        scrollDown();
       }
       })
-    },
+    }
+
+    window.addEventListener("resize", resizeEvent);
+    loadData()
+    nextTick(() => {
+      resizeEvent();
+      scrollDown();
+    });
+
+    return {friend, user, messages, text, messagesHeight, loadingMessages, socket, messagesDiv, sendMessage}
   },
 };
 </script>
