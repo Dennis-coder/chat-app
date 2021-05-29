@@ -42,35 +42,40 @@
 
 <script>
 import axios from "axios";
+import { ref, computed } from "vue";
+import { useStore } from "vuex";
+import { useRouter } from "vue-router";
 
 export default {
-  data() {
-    return {
-      username: "",
-      password: "",
-      error: "",
-    };
-  },
-  computed: {
-    buttonStateActive() {
-      return this.username && this.password;
-    },
-  },
-  methods: {
-    async login() {
+  setup() {
+    const username = ref("");
+    const password = ref("");
+    const error = ref("");
+
+    const store = useStore();
+    const router = useRouter();
+
+    const buttonStateActive = computed(() => username.value && password.value);
+
+    const login = async function () {
       let response = (
-        await axios.get("/api/v1/user/login?" + new URLSearchParams({
-          username: this.username,
-          password: this.password,
-        }))
+        await axios.get(
+          "/api/v1/user/login?" +
+            new URLSearchParams({
+              username: username.value,
+              password: password.value,
+            })
+        )
       ).data;
       if (response.status === "error") {
-        this.error = response.error;
+        error.value = response.error;
       } else {
-        this.$store.dispatch('setUser', response.user)
-        this.$router.push("/home");
+        store.dispatch("setUser", response.user);
+        router.push("/home");
       }
-    },
+    };
+
+    return { username, password, error, buttonStateActive, login };
   },
 };
 </script>

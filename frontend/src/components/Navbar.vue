@@ -18,20 +18,14 @@
 </template>
 
 <script>
+import { useStore } from 'vuex'
 export default {
-  data() {
-    return {
-      showMenu: false,
-    };
-  },
-  computed: {
-    user() {
-      return this.$store.state.userModule.user;
-    },
+  setup() {
+    const store = useStore()
+    const user = store.state.userModule.user
+    const isAdmin = user ? user.role == "admin" : false;
 
-    isAdmin() {
-      return this.user ? this.user.role == "admin" : false;
-    },
+    return {isAdmin, user}
   },
 };
 </script>

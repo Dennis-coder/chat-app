@@ -39,30 +39,34 @@
 <script>
 import axios from "axios";
 import Message from "../components/Message.vue";
-import { ref, nextTick } from 'vue'
-import { useStore } from 'vuex'
-import { useRoute } from 'vue-router'
+import { ref, nextTick } from "vue";
+import { useStore } from "vuex";
+import { useRoute } from "vue-router";
 
 export default {
   components: {
     Message,
   },
   setup() {
-    const friend = ref(null)
-    const messages = ref(null)
-    const messagesDiv = ref(null)
-    
-    const text = ref('')
-    const messagesHeight = ref(0)
-    const loadingMessages = ref(true)
+    const friend = ref(null);
+    const messages = ref(null);
+    const messagesDiv = ref(null);
 
-    const route = useRoute()
-    const store = useStore()
-    const user = ref(store.state.userModule.user)
-    const socket = ref(store.state.socket)
+    const text = ref("");
+    const messagesHeight = ref(0);
+    const loadingMessages = ref(true);
 
+    const route = useRoute();
+    const store = useStore();
+    const user = ref(store.state.userModule.user);
+    const socket = store.state.socket;
 
-    const loadData = async function() {
+    socket.on(`user-${user.value.id}`, (newMessage) => {
+      messages.value.push(newMessage);
+      scrollDown();
+    });
+
+    const loadData = async function () {
       if (store.state.friends.length > 0) {
         friend.value = store.state.friends.find(
           (friend) => (friend.id = route.params.id)
@@ -87,11 +91,11 @@ export default {
             })
         )
       ).data;
-  
-      loadingMessages.value = false
-    }
 
-    const sendMessage = async function() {
+      loadingMessages.value = false;
+    };
+
+    const sendMessage = async function () {
       let newMessage = (
         await axios.post("/api/v1/message", {
           text: text.value,
@@ -100,34 +104,47 @@ export default {
         })
       ).data;
       messages.value.push(newMessage);
-      store.dispatch('emitSocketEvent', { event: "chat message", args: { event: `user-${friend.value.id}`, data: newMessage } })
+      store.dispatch("emitSocketEvent", {
+        event: "chat message",
+        args: { event: `user-${friend.value.id}`, data: newMessage },
+      });
       text.value = "";
-      scrollDown()
-    }
+      scrollDown();
+    };
 
-    const resizeEvent = function() {
+    const resizeEvent = function () {
       messagesHeight.value = window.innerHeight - 48;
-    }
+    };
 
-    const scrollDown = async function() {
+    const scrollDown = async function () {
       nextTick(async () => {
         if (messagesDiv.value) {
-        messagesDiv.value.scrollTop = messagesDiv.value.scrollHeight;
-      } else {
-        await new Promise((r) => setTimeout(r, 50));
-        scrollDown();
-      }
-      })
-    }
+          messagesDiv.value.scrollTop = messagesDiv.value.scrollHeight;
+        } else {
+          await new Promise((r) => setTimeout(r, 50));
+          scrollDown();
+        }
+      });
+    };
 
     window.addEventListener("resize", resizeEvent);
-    loadData()
+    loadData();
     nextTick(() => {
       resizeEvent();
       scrollDown();
     });
 
-    return {friend, user, messages, text, messagesHeight, loadingMessages, socket, messagesDiv, sendMessage}
+    return {
+      friend,
+      user,
+      messages,
+      text,
+      messagesHeight,
+      loadingMessages,
+      socket,
+      messagesDiv,
+      sendMessage,
+    };
   },
 };
 </script>

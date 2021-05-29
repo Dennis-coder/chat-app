@@ -48,40 +48,51 @@
 
 <script>
 import axios from "axios";
+import { ref, computed } from "vue";
+import { useStore } from "vuex";
+import { useRouter } from "vue-router";
 
 export default {
-  data() {
-    return {
-      username: "",
-      password: "",
-      confirmPassword: "",
-      error: "",
-    };
-  },
-  computed: {
-    buttonStateActive() {
-      return this.username && this.password && this.confirmPassword;
-    },
-  },
-  methods: {
-    async register() {
-      if (this.password != this.confirmPassword) {
-        this.error = "Passwords don't match";
+  setup() {
+    const store = useStore();
+    const router = useRouter();
+
+    const username = ref("");
+    const password = ref("");
+    const confirmPassword = ref("");
+    const error = ref("");
+
+    const buttonStateActive = computed(
+      () => this.username && this.password && this.confirmPassword
+    );
+
+    const register = async function () {
+      if (password.value != confirmPassword.value) {
+        error.value = "Passwords don't match";
         return;
       }
       let response = (
         await axios.post("/api/v1/user/register", {
-          username: this.username,
-          password: this.password,
+          username: username.value,
+          password: password.value,
         })
       ).data;
       if (response.status === "error") {
-        this.error = response.error;
+        error.value = response.error;
       } else {
-        this.$store.dispatch('setUser', response.user)
-        this.$router.push("/home");
+        store.dispatch("setUser", response.user);
+        router.push("/home");
       }
-    },
+    };
+
+    return {
+      username,
+      password,
+      confirmPassword,
+      error,
+      buttonStateActive,
+      register,
+    };
   },
 };
 </script>

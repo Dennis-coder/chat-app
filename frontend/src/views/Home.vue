@@ -42,7 +42,9 @@
       </p>
       <div v-if="friends.length === 0" class="center-me flex-col">
         <p class="text-center">Try finding some friends to chat with</p>
-        <router-link to="/find" class="text-center text-2xl">Click here to find a user</router-link>
+        <router-link to="/find" class="text-center text-2xl"
+          >Click here to find a user</router-link
+        >
       </div>
     </div>
     <div v-if="tab === 1">
@@ -72,51 +74,59 @@
 
 <script>
 import axios from "axios";
+import { ref, computed } from "vue";
+import { useStore } from "vuex";
 
 export default {
-  data() {
-    return {
-      tab: 0,
-      userSearch: "",
-      groupSearch: "",
+  setup() {
+    const tab = ref(0);
+    const userSearch = ref("");
+    const groupSearch = ref("");
+    const store = useStore();
+    const user = store.state.userModule.user;
+    const friends = computed(() => store.state.friends);
+    const groups = computed(() => store.state.groups);
+
+    const friendsFiltered = computed(() =>
+      friends.value.filter((friend) =>
+        friend.username.includes(userSearch.value)
+      )
+    );
+
+    const groupsFiltered = computed(() =>
+      groups.value.filter((group) => group.name.includes(groupSearch.value))
+    );
+
+    const loadData = async function () {
+      store.dispatch(
+        "setFriends",
+        (
+          await axios.get(
+            "/api/v1/friend/all?" + new URLSearchParams({ user_id: user.id })
+          )
+        ).data
+      );
+      store.dispatch(
+        "setGroups",
+        (
+          await axios.get(
+            "/api/v1/group/all?" + new URLSearchParams({ user_id: user.id })
+          )
+        ).data
+      );
     };
-  },
-  async created() {
-    this.$store.state.friends = (
-      await axios.get(
-        "/api/v1/friend/all?" + new URLSearchParams({ user_id: this.user.id })
-      )
-    ).data;
-    this.$store.state.groups = (
-      await axios.get(
-        "/api/v1/group/all?" + new URLSearchParams({ user_id: this.user.id })
-      )
-    ).data;
-  },
-  computed: {
-    user() {
-      return this.$store.state.userModule.user;
-    },
 
-    friends() {
-      return this.$store.state.friends;
-    },
+    loadData();
 
-    friendsFiltered() {
-      return this.friends.filter((friend) =>
-        friend.username.includes(this.userSearch)
-      );
-    },
-
-    groups() {
-      return this.$store.state.groups;
-    },
-
-    groupsFiltered() {
-      return this.groups.filter((group) =>
-        group.name.includes(this.groupSearch)
-      );
-    },
+    return {
+      tab,
+      userSearch,
+      groupSearch,
+      friends,
+      groups,
+      friendsFiltered,
+      groupsFiltered,
+    };
   },
 };
 </script>

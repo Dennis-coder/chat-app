@@ -77,44 +77,59 @@
 </template>
 
 <script>
+import { ref } from "vue";
+import { useStore } from "vuex";
+import { useRouter } from "vue-router";
+
 export default {
-  data() {
-    return {
-      password: {
-        current: "",
-        new: "",
-        confirm: "",
-      },
-      report: {
-        reason: "",
-        defendant: null
-      },
-      showPassword: false,
-      showReport: false,
+  setup() {
+    const store = useStore();
+    const router = useRouter();
+
+    const password = ref({
+      current: "",
+      new: "",
+      confirm: "",
+    });
+    const report = ref({
+      reason: "",
+      defendant: null,
+    });
+    const showPassword = ref(false);
+    const showReport = ref(false);
+
+    const togglePassword = function () {
+      showPassword.value = !showPassword.value;
     };
-  },
-  computed: {},
-  methods: {
-    togglePassword() {
-      this.showPassword = !this.showPassword;
-    },
 
-    toggleReport() {
-      this.showReport = !this.showReport
-    },
+    const toggleReport = function () {
+      showReport.value = !showReport.value;
+    };
 
-    changePassword() {
-      console.log(this.password);
-    },
+    const changePassword = function () {
+      console.log(password.value);
+    };
 
-    sendReport() {
-      console.log(this.report)
-    },
+    const sendReport = function () {
+      console.log(report.value);
+    };
 
-    logout() {
-      this.$store.dispatch("removeUser");
-      this.$router.push("/");
-    },
+    const logout = function () {
+      store.dispatch("removeUser");
+      router.push("/");
+    };
+
+    return {
+      password,
+      report,
+      showPassword,
+      showReport,
+      togglePassword,
+      toggleReport,
+      changePassword,
+      sendReport,
+      logout,
+    };
   },
 };
 </script>
