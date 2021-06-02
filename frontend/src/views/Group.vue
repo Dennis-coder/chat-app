@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col h-full">
     <div class="w-full h-10 bg-gray-70 bg-opacity-80 center-me">
-      <h2 v-if="friend" class="text-2xl">{{ friend.username }}</h2>
+      <h2 v-if="group" class="text-2xl">{{ group.name }}</h2>
     </div>
     <div
       v-if="messages && !loadingMessages"
@@ -42,7 +42,7 @@
 <script>
 import axios from "axios";
 import Message from "../components/Message.vue";
-import { ref, nextTick } from "vue";
+import { ref, nextTick, onUnmounted } from "vue";
 import { useStore } from "vuex";
 import { useRoute } from "vue-router";
 
@@ -51,7 +51,8 @@ export default {
     Message,
   },
   setup() {
-    const friend = ref(null);
+    const group = ref(null);
+    const friends = ref(null);
     const messages = ref(null);
     const messagesDiv = ref(null);
 
@@ -64,28 +65,35 @@ export default {
     const user = ref(store.state.user);
     const socket = store.state.socket;
 
-    socket.on(`incoming message`, (newMessage) => {
-      if (newMessage.senderId === friend.value.id) {
-        messages.value.push(newMessage);
-        scrollDown();
-      }
+    socket.emit("join-group", route.params.id);
+
+    socket.on(`group message`, (newMessage) => {
+      messages.value.push(newMessage);
+      scrollDown();
     });
 
     const loadData = async function () {
-      if (store.state.friends.length > 0) {
-        friend.value = store.state.friends.find(
-          (friend) => (friend.id = route.params.id)
+      if (store.state.groups.length > 0) {
+        group.value = store.state.groups.find(
+          (group) => (group.id = route.params.id)
         );
       } else {
-        friend.value = (
-          await axios.get("/api/v1/friend", {
-            params: { friend_id: route.params.id, user_id: user.value.id },
+        group.value = (
+          await axios.get("/api/v1/group", {
+            params: { group_id: route.params.id },
           })
         ).data;
       }
+
       messages.value = (
-        await axios.get("/api/v1/friend/messages", {
-          params: { friend_id: route.params.id, user_id: user.value.id },
+        await axios.get("/api/v1/group/messages", {
+          params: { group_id: route.params.id },
+        })
+      ).data;
+
+      friends.value = (
+        await axios.get("/api/v1/group/members", {
+          params: { group_id: route.params.id },
         })
       ).data;
 
@@ -94,14 +102,14 @@ export default {
 
     const sendMessage = async function () {
       let newMessage = (
-        await axios.post("/api/v1/friend/message", {
+        await axios.post("/api/v1/group/message", {
           text: text.value,
           sender_id: user.value.id,
-          reciever_id: friend.value.id,
+          group_id: group.value.id,
         })
       ).data;
       messages.value.push(newMessage);
-      socket.emit("chat message", newMessage);
+      socket.emit(`group message`, newMessage);
       text.value = "";
       scrollDown();
     };
@@ -121,15 +129,20 @@ export default {
       });
     };
 
-    window.addEventListener("resize", resizeEvent);
     loadData();
+    window.addEventListener("resize", resizeEvent);
     nextTick(() => {
       resizeEvent();
       scrollDown();
     });
 
+    onUnmounted(() => {
+      socket.emit("leave-group", group.value.id);
+    });
+
     return {
-      friend,
+      group,
+      friends,
       user,
       messages,
       text,

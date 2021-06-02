@@ -36,11 +36,11 @@ def login(username, password):
                 WHERE username = %s
             ) AS user_row;
         """, [username])
-        user = db.one()[0]
-        if user and bcrypt.checkpw(password.encode(), user['pwd_hash'].encode()):
-            return User(user)
-        else:
-            return "Incorrect credentials"
+        user = db.one()
+    if user and bcrypt.checkpw(password.encode(), user[0]['pwd_hash'].encode()):
+        return User(user[0])
+    else:
+        return "Incorrect credentials"
 
 def register(username, password):
     with DBHandler() as db:
@@ -59,7 +59,82 @@ def register(username, password):
             RETURNING id;
         """, [username, bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode(), "user"])
 
-        return get(db.one()[0])
+        id = db.one()[0]
+    return get(id)
+
+def update(user_id, password = None, role = None):
+    with DBHandler() as db:
+        if password:
+            db.execute("""
+                UPDATE users
+                SET pwd_hash = %s
+                WHERE id = %s;
+            """, [bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode(), user_id])
+        if role:
+            db.execute("""
+                UPDATE users
+                SET role = %s
+                WHERE id = %s;
+            """, [role, role])
+    return "User has been updated"
+
+def delete(user_id):
+    with DBHandler() as db:
+        db.execute("""
+            DELETE FROM users
+            WHERE id = %s;
+        """, [user_id])
+    return "User has been deleted"
+
+def search(term, user_id):
+    with DBHandler() as db:
+        db.execute("""
+            SELECT row_to_json(user_row)
+            FROM (
+                SELECT id, username, status, user_id AS sent_by
+                FROM users 
+                LEFT JOIN friendships
+                    ON (user_id = id AND user2_id = %s) OR (user_id = %s AND user2_id = id)
+                WHERE username = %s
+            ) AS user_row;
+        """, [user_id, user_id, term])
+
+        perfect_match = db.one()
+
+        db.execute("""
+            SELECT json_agg(user_rows)
+            FROM (
+                SELECT id, username, status, user_id AS sent_by
+                FROM users
+                LEFT JOIN friendships
+                    ON (user_id = id AND user2_id = %s) OR (user_id = %s AND user2_id = id)
+                WHERE username != %s 
+                AND username SIMILAR TO %s
+            ) AS user_rows;
+        """, [user_id, user_id, term, f"{term}%"])
+
+        prefix_matches = db.all()[0][0]
+
+        db.execute("""
+            SELECT json_agg(user_rows)
+            FROM (
+                SELECT id, username, status, user_id AS sent_by
+                FROM users
+                LEFT JOIN friendships
+                    ON (user_id = id AND user2_id = %s) OR (user_id = %s AND user2_id = id)
+                WHERE username != %s 
+                AND username NOT SIMILAR TO %s
+                AND username SIMILAR TO %s
+            ) AS user_rows;
+        """, [user_id, user_id, term, f"{term}%", f"%{term}%"])
+
+        partial_matches = db.all()[0][0]
+    
+    users = [perfect_match[0]] if perfect_match else []
+    users = users + prefix_matches if prefix_matches else users
+    users = users + partial_matches if partial_matches else users
+
+    return users
 
 
 def token(user):

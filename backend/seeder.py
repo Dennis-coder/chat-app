@@ -22,13 +22,13 @@ def connect():
     return psycopg2.connect(database="websnap", user="postgres", password="", host="127.0.0.1", port="5432")
 
 def drop_tables(db):
-    db.execute("DROP TABLE IF EXISTS users;")
-    db.execute("DROP TABLE IF EXISTS messages;")
-    db.execute("DROP TABLE IF EXISTS friendships;")
-    db.execute("DROP TABLE IF EXISTS groups")
-    db.execute("DROP TABLE IF EXISTS group_memberships")
-    db.execute("DROP TABLE IF EXISTS groupmessages")
-    db.execute("DROP TABLE IF EXISTS reports")
+    db.execute("DROP TABLE IF EXISTS users CASCADE;")
+    db.execute("DROP TABLE IF EXISTS messages CASCADE;")
+    db.execute("DROP TABLE IF EXISTS friendships CASCADE;")
+    db.execute("DROP TABLE IF EXISTS groups CASCADE;")
+    db.execute("DROP TABLE IF EXISTS group_memberships CASCADE;")
+    db.execute("DROP TABLE IF EXISTS group_messages CASCADE;")
+    db.execute("DROP TABLE IF EXISTS reports CASCADE;")
 
 def create_tables(db):
     db.execute("""
@@ -45,47 +45,49 @@ def create_tables(db):
             id SERIAL PRIMARY KEY,
             text VARCHAR(255) NOT NULL,
             timestamp TIMESTAMP NOT NULL,
-            sender_id INTEGER NOT NULL,
-            reciever_id INTEGER NOT NULL
+            sender_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            reciever_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE
         );
     """)
     db.execute("""
         CREATE TABLE friendships(
-            user_id INTEGER NOT NULL,
-            user2_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            user2_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
             status INTEGER NOT NULL,
             last_interaction TIMESTAMP NOT NULL,
-            friends_since TIMESTAMP NOT NULL
+            friends_since TIMESTAMP NOT NULL,
+            PRIMARY KEY (user_id, user2_id)
         );
     """)
     db.execute("""
         CREATE TABLE groups(
             id SERIAL PRIMARY KEY,
             name VARCHAR(25) NOT NULL,
-            last_interaction TIMESTAMP NOT NULL
+            last_interaction TIMESTAMP NOT NULL,
+            owner_id INTEGER NOT NULL REFERENCES users(id)
         );
     """)
     db.execute("""
         CREATE TABLE group_memberships(
-            group_id INTEGER NOT NULL,
-            user_id INTEGER NOT NULL,
+            group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
             joined_at TIMESTAMP NOT NULL
         );
     """)
     db.execute("""
-        CREATE TABLE groupmessages(
+        CREATE TABLE group_messages(
             id SERIAL PRIMARY KEY,
             text VARCHAR(255) NOT NULL,
             timestamp TIMESTAMP NOT NULL,
-            group_id INTEGER NOT NULL,
-            sender_id INTEGER NOT NULL
+            sender_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE
         );
     """)
     db.execute("""
         CREATE TABLE reports(
             id SERIAL PRIMARY KEY,
-            plaintiff_id INTEGER NOT NULL,
-            defendant_id INTEGER NOT NULL,
+            plaintiff_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            defendant_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
             reason TEXT NOT NULL,
             status VARCHAR(10) NOT NULL
         );
@@ -146,16 +148,17 @@ def populate_tables(db):
         """, [user_id, user2_id, status])
 
     groups = [
-        {"name": "test group 1"},
-        {"name": "test group 2"},
+        {"name": "test group 1", "owner_id": 4},
+        {"name": "test group 2", "owner_id": 4},
     ]
 
     for group in groups:
         name = group["name"]
+        owner_id = group["owner_id"]
         db.execute("""
-            INSERT INTO groups(name, last_interaction) 
-            VALUES(%s, 'now');
-        """, [name])
+            INSERT INTO groups(name, last_interaction, owner_id) 
+            VALUES(%s, 'now', %s);
+        """, [name, owner_id])
 
     group_memberships = [
         {"group_id": 1, "user_id": 1},

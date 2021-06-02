@@ -1,10 +1,7 @@
 <template>
-  <div class="center-me flex-col pt-4">
+  <div class="center-me flex-col pt-4 h-full">
     <div class="center-me flex-col">
-      <button
-        @click="togglePassword"
-        class="focus:outline-none mb-2 text-xl center-me"
-      >
+      <button @click="togglePassword" class="form-button">
         Change password
         <img
           src="../assets/arrow.svg"
@@ -12,25 +9,16 @@
           :class="{ 'rotate-90': showPassword }"
         />
       </button>
-      <form
-        class="transition-all duration-300 overflow-hidden h-0 flex items-center flex-col space-y-2"
-        :class="{ 'h-36': showPassword }"
-      >
+      <form class="form h-0" :class="{ 'h-32': showPassword }">
         <input
           type="password"
-          class="border border-black focus:outline-none px-1 w-48"
-          placeholder="Current password"
-          v-model="password.current"
-        />
-        <input
-          type="password"
-          class="border border-black focus:outline-none px-1 w-48"
+          class="input-field w-48"
           placeholder="New password"
           v-model="password.new"
         />
         <input
           type="password"
-          class="border border-black focus:outline-none px-1 w-48"
+          class="input-field w-48"
           placeholder="Confirm new password"
           v-model="password.confirm"
         />
@@ -39,10 +27,7 @@
     </div>
 
     <div class="center-me flex-col">
-      <button
-        @click="toggleReport"
-        class="focus:outline-none mb-2 text-xl center-me"
-      >
+      <button @click="toggleReport" class="form-button">
         Report a user
         <img
           src="../assets/arrow.svg"
@@ -50,19 +35,16 @@
           :class="{ 'rotate-90': showReport }"
         />
       </button>
-      <form
-        class="transition-all duration-300 overflow-hidden h-0 flex items-center flex-col space-y-2"
-        :class="{ 'h-48': showReport }"
-      >
+      <form class="form h-0" :class="{ 'h-52': showReport }">
         <input
           type="text"
-          class="border border-black focus:outline-none px-1 w-48"
+          class="input-field w-48"
           placeholder="Their username"
           v-model="report.defendant"
         />
         <textarea
           type="text"
-          class="border border-black focus:outline-none px-1 w-48"
+          class="input-field w-48"
           rows="4"
           placeholder="Reason"
           v-model="report.reason"
@@ -71,12 +53,17 @@
       </form>
     </div>
 
-    <button @click.prevent="logout" class="button2">Logout</button>
-    <button @click.prevent="logout" class="button2">Delete account</button>
+    <div class="mt-auto mb-4">
+      <button @click.prevent="logout" class="button2">Logout</button>
+      <button @click.prevent="deleteAccount" class="button2">
+        Delete account
+      </button>
+    </div>
   </div>
 </template>
 
 <script>
+import axios from "axios";
 import { ref } from "vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
@@ -85,9 +72,9 @@ export default {
   setup() {
     const store = useStore();
     const router = useRouter();
+    const user = store.state.user;
 
     const password = ref({
-      current: "",
       new: "",
       confirm: "",
     });
@@ -106,7 +93,13 @@ export default {
       showReport.value = !showReport.value;
     };
 
-    const changePassword = function () {
+    const changePassword = async function () {
+      if (password.value.new === password.value.confirm) {
+        await axios.put("/api/v1/user", {
+          user_id: user.id,
+          password: password.value.new,
+        });
+      }
       console.log(password.value);
     };
 
@@ -119,6 +112,11 @@ export default {
       router.push("/");
     };
 
+    const deleteAccount = async function () {
+      await axios.delete("/api/v1/user", { data: user.id });
+      logout();
+    };
+
     return {
       password,
       report,
@@ -129,10 +127,21 @@ export default {
       changePassword,
       sendReport,
       logout,
+      deleteAccount,
     };
   },
 };
 </script>
 
 <style>
+.form {
+  @apply transition-all duration-300 overflow-hidden flex items-center flex-col space-y-2;
+}
+.form-button {
+  @apply focus:outline-none mb-2 text-xl flex items-center justify-center;
+}
+.form-button img {
+  filter: invert(100%) sepia(70%) saturate(546%) hue-rotate(178deg)
+    brightness(101%) contrast(84%);
+}
 </style>

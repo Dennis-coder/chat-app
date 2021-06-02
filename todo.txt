@@ -1,0 +1,17 @@
+Backend
+update last_interaction on interaction
+create group
+add user to group
+remove user from group
+
+Frontend
+groupchat modal
+responsiveness/css for tablets and desktops
+groupchat owner settings modal
+friend settings modal
+
+Sockets
+notify when recieving new messages
+centralize socket logic in frontend
+make actions depend on where you are in the site
+sync friends when someone accepts your request

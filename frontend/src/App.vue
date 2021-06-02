@@ -1,5 +1,5 @@
 <template>
-  <div class="h-screen flex flex-col">
+  <div class="h-screen flex flex-col text-gray-200">
     <Navbar />
     <router-view />
   </div>
@@ -21,6 +21,6 @@ export default {
   -moz-osx-font-smoothing: grayscale;
 }
 body {
-  background: #f4f4f4;
+  background: #292929;
 }
 </style>

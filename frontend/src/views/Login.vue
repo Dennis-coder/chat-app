@@ -6,13 +6,13 @@
     </h2>
     <form class="mt-2 center-me flex-col space-y-4">
       <input
-        class="border border-gray-500 p-1"
+        class="input-field"
         type="text"
         placeholder="Username"
         v-model="username"
       />
       <input
-        class="border border-gray-500 p-1"
+        class="input-field"
         type="password"
         placeholder="Password"
         v-model="password"
@@ -33,7 +33,7 @@
 
     <span class="mt-4"
       >Don't have an account?
-      <router-link class="text-blue-500 hover:underline" to="/register"
+      <router-link class="text-blue-400 hover:underline" to="/register"
         >Register here</router-link
       ></span
     >
@@ -59,13 +59,9 @@ export default {
 
     const login = async function () {
       let response = (
-        await axios.get(
-          "/api/v1/user/login?" +
-            new URLSearchParams({
-              username: username.value,
-              password: password.value,
-            })
-        )
+        await axios.get("/api/v1/user", {
+          params: { username: username.value, password: password.value },
+        })
       ).data;
       if (response.status === "error") {
         error.value = response.error;

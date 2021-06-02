@@ -4,8 +4,8 @@ import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
 import Home from '../views/Home.vue'
 import Settings from '../views/Settings.vue'
-import Find from '../views/Find.vue'
 import Friend from '../views/Friend.vue'
+import Group from '../views/Group.vue'
 import jwt_decode from "jwt-decode"
 
 const routes = [
@@ -50,9 +50,9 @@ const routes = [
     }
   },
   {
-    path: '/find',
-    name: 'Find',
-    component: Find,
+    path: '/group/:id',
+    name: 'Group',
+    component: Group,
     meta: {
       allowedRoles: ['user', 'admin']
     }

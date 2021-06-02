@@ -6,19 +6,19 @@
     </h2>
     <form class="mt-2 center-me flex-col space-y-4">
       <input
-        class="border border-gray-500 p-1"
+        class="input-field"
         type="text"
         placeholder="Username"
         v-model="username"
       />
       <input
-        class="border border-gray-500 p-1"
+        class="input-field"
         type="password"
         placeholder="Password"
         v-model="password"
       />
       <input
-        class="border border-gray-500 p-1"
+        class="input-field"
         type="password"
         placeholder="Confirm password"
         v-model="confirmPassword"
@@ -39,7 +39,7 @@
 
     <span class="mt-4"
       >Already have an account?
-      <router-link class="text-blue-500 hover:underline" to="/login"
+      <router-link class="text-blue-400 hover:underline" to="/login"
         >Login here</router-link
       ></span
     >
@@ -63,7 +63,7 @@ export default {
     const error = ref("");
 
     const buttonStateActive = computed(
-      () => this.username && this.password && this.confirmPassword
+      () => username.value && password.value && confirmPassword.value
     );
 
     const register = async function () {
@@ -72,7 +72,7 @@ export default {
         return;
       }
       let response = (
-        await axios.post("/api/v1/user/register", {
+        await axios.post("/api/v1/user", {
           username: username.value,
           password: password.value,
         })

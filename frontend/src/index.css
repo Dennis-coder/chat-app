@@ -6,39 +6,30 @@
     @apply flex justify-center items-center
 }
 
-.button1{
+.button1 {
     @apply text-2xl bg-red-500 rounded-full px-4 text-center ring ring-red-500 text-white w-max m-1
 }
 
-.button1:hover{
-    @apply ring-red-400
-}
-
-.button1:focus{
-    @apply bg-red-600 outline-none
-}
-
-.button2{
+.button2 {
     @apply text-xl bg-red-500 rounded-full px-3 text-center ring ring-red-500 text-white w-max m-1
 }
 
-.button2:hover{
+.button3 {
+    @apply text-base bg-red-500 rounded-full px-2 text-center ring ring-red-500 text-white w-max m-1
+}
+
+.button1:hover,
+.button2:hover,
+.button3:hover {
     @apply ring-red-400
 }
 
-.button2:focus{
+.button1:focus,
+.button2:focus,
+.button3:focus {
     @apply bg-red-600 outline-none
 }
 
-.your-message,
-.your-message *{
-    @apply ml-auto
-}
-
-.your-message div{
-    @apply bg-blue-600 text-white
-}
-
-.others-message div{
-    @apply bg-gray-200
+.input-field {
+    @apply bg-black border border-gray-600 py-1 px-2 focus:outline-none
 }
