@@ -106,7 +106,7 @@ def group():
         group = Group.get(**request.args)
         return group
     elif request.method == "POST":
-        group = Group.add(**request.json)
+        group = Group.new(**request.json)
         return group
     elif request.method == "PUT":
         group = Group.update(**request.json)
@@ -130,6 +130,15 @@ def group_message():
 def all_group_messages():
     messages = GroupMessage.get_all(**request.args)
     return jsonify(messages)
+
+@app.route("/api/v1/group/member", methods=["POST", "DELETE"])
+def member():
+    if request.method == "POST":
+        result = Group.add_member(**request.json)
+        return result
+    elif request.method == "DELETE":
+        result = Group.remove_member(**request.json)
+        return result
 
 @app.route("/api/v1/group/members", methods=["GET"])
 def group_members():

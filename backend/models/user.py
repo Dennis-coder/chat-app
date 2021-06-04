@@ -95,7 +95,7 @@ def search(term, user_id):
                 FROM users 
                 LEFT JOIN friendships
                     ON (user_id = id AND user2_id = %s) OR (user_id = %s AND user2_id = id)
-                WHERE username = %s
+                WHERE username ILIKE %s
             ) AS user_row;
         """, [user_id, user_id, term])
 
@@ -108,8 +108,8 @@ def search(term, user_id):
                 FROM users
                 LEFT JOIN friendships
                     ON (user_id = id AND user2_id = %s) OR (user_id = %s AND user2_id = id)
-                WHERE username != %s 
-                AND username SIMILAR TO %s
+                WHERE username NOT ILIKE %s 
+                AND username ILIKE %s
             ) AS user_rows;
         """, [user_id, user_id, term, f"{term}%"])
 
@@ -122,9 +122,9 @@ def search(term, user_id):
                 FROM users
                 LEFT JOIN friendships
                     ON (user_id = id AND user2_id = %s) OR (user_id = %s AND user2_id = id)
-                WHERE username != %s 
-                AND username NOT SIMILAR TO %s
-                AND username SIMILAR TO %s
+                WHERE username NOT ILIKE %s 
+                AND username NOT ILIKE %s
+                AND username ILIKE %s
             ) AS user_rows;
         """, [user_id, user_id, term, f"{term}%", f"%{term}%"])
 

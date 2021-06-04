@@ -1,5 +1,6 @@
 <template>
   <div class="h-full w-full flex items-center flex flex-col">
+    <Navbar />
     <div class="center-me">
       <img class="" src="../assets/promo.jpg" alt="" />
       <h1 class="absolute text-white text-4xl text-center">
@@ -15,5 +16,10 @@
 </template>
 
 <script>
-export default {};
+import Navbar from '../components/Navbar.vue'
+export default {
+  components: {
+    Navbar
+  }
+};
 </script>

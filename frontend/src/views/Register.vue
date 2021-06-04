@@ -1,5 +1,6 @@
 <template>
   <div class="w-full center-me flex-col">
+    <Navbar />
     <h1 class="text-3xl font-bold text-center mt-4">Create an account</h1>
     <h2 class="text-lg text-red-500 h-7" :class="{ invisible: !error }">
       {{ error }}
@@ -47,12 +48,16 @@
 </template>
 
 <script>
+import Navbar from '../components/Navbar.vue'
 import axios from "axios";
 import { ref, computed } from "vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
 
 export default {
+  components: {
+    Navbar
+  },
   setup() {
     const store = useStore();
     const router = useRouter();

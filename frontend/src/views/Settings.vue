@@ -1,6 +1,11 @@
 <template>
-  <div class="center-me flex-col pt-4 h-full">
-    <div class="center-me flex-col">
+  <div class="center-me flex-col h-full">
+    <NavbarLite
+      :text="'Settings'"
+      :settings="false"
+      @back="back"
+    />
+    <div class="center-me flex-col pt-4">
       <button @click="togglePassword" class="form-button">
         Change password
         <img
@@ -64,11 +69,15 @@
 
 <script>
 import axios from "axios";
+import NavbarLite from '../components/NavbarLite.vue'
 import { ref } from "vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
 
 export default {
+  components: {
+    NavbarLite
+  },
   setup() {
     const store = useStore();
     const router = useRouter();
@@ -117,6 +126,10 @@ export default {
       logout();
     };
 
+    const back = async function () {
+      router.push('/home')
+    }
+
     return {
       password,
       report,
@@ -128,6 +141,7 @@ export default {
       sendReport,
       logout,
       deleteAccount,
+      back
     };
   },
 };

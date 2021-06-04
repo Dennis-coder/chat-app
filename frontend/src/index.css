@@ -7,27 +7,39 @@
 }
 
 .button1 {
-    @apply text-2xl bg-red-500 rounded-full px-4 text-center ring ring-red-500 text-white w-max m-1
+    @apply bg-red-500 rounded-full text-center border-4 border-red-500 text-white w-max text-2xl px-4
 }
 
 .button2 {
-    @apply text-xl bg-red-500 rounded-full px-3 text-center ring ring-red-500 text-white w-max m-1
+    @apply bg-red-500 rounded-full text-center border-4 border-red-500 text-white w-max text-xl px-3
 }
 
 .button3 {
-    @apply text-base bg-red-500 rounded-full px-2 text-center ring ring-red-500 text-white w-max m-1
+    @apply bg-red-500 rounded-full text-center border-4 border-red-500 text-white w-max text-base px-2
+}
+
+.button1:hover:disabled,
+.button2:hover:disabled,
+.button3:hover:disabled {
+    @apply border-red-500
 }
 
 .button1:hover,
 .button2:hover,
 .button3:hover {
-    @apply ring-red-400
+    @apply border-red-400
 }
 
 .button1:focus,
 .button2:focus,
 .button3:focus {
     @apply bg-red-600 outline-none
+}
+
+.button1:disabled,
+.button2:disabled,
+.button3:disabled {
+    @apply opacity-50 cursor-default
 }
 
 .input-field {

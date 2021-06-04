@@ -1,5 +1,6 @@
 <template>
   <div class="w-full center-me flex-col">
+    <Navbar />
     <h1 class="text-3xl font-bold text-center mt-4">Log in to your account</h1>
     <h2 class="text-lg text-red-500 h-7" :class="{ invisible: !error }">
       {{ error }}
@@ -22,10 +23,6 @@
         @click.prevent="login"
         :disabled="!buttonStateActive"
         class="button1 mt-4"
-        :class="{
-          'opacity-50': !buttonStateActive,
-          'cursor-pointer': buttonStateActive,
-        }"
       >
         Login
       </button>
@@ -41,12 +38,16 @@
 </template>
 
 <script>
+import Navbar from '../components/Navbar.vue'
 import axios from "axios";
 import { ref, computed } from "vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
 
 export default {
+  components: {
+    Navbar
+  },
   setup() {
     const username = ref("");
     const password = ref("");

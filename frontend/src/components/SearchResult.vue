@@ -1,5 +1,5 @@
 <template>
-  <div class="py-2 flex justify-between items-center">
+  <div class="py-1 px-2 flex justify-between items-center">
     <h2 class="text-lg">{{ result.username }}</h2>
     <button
       v-if="result.status === null"

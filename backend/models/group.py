@@ -8,7 +8,7 @@ def Group(params):
         "id": params["id"],
         "name": params["name"],
         "lastInteraction": parse_timestamp(params["last_interaction"]),
-        "owner_id": params["owner_id"]
+        "owner": params["owner"]
     }
 
 
@@ -26,18 +26,25 @@ def get(group_id):
         group = db.one()[0]
     return Group(group)
 
-def add(name, user_id):
+def create(name, owner):
     with DBHandler() as db:
         db.execute("""
-            INSERT INTO groups(name, last_interaction, owner_id)
+            INSERT INTO groups(name, last_interaction, owner)
             VALUES(%s, 'now', %s)
             RETURNING id;
-        """, [name, user_id])
+        """, [name, owner])
 
         id = db.one()[0]
     return get(id)
 
-def update(group_id, name = None, owner_id = None):
+def new(name, owner, users):
+    group = create(name, owner)
+    add_member(group["id"], owner)
+    for user in users:
+        add_member(group["id"], user)
+    return group
+
+def update(group_id, name = None, owner = None):
     with DBHandler() as db:
         if name:
             db.execute("""
@@ -45,12 +52,12 @@ def update(group_id, name = None, owner_id = None):
                 SET name = %s
                 WHERE id = %s;
             """, [name, group_id])
-        if owner_id:
+        if owner:
             db.execute("""
                 UPDATE groups
-                SET owner_id = %s
+                SET owner = %s
                 WHERE id = %s;
-            """, [owner_id, group_id])
+            """, [owner, group_id])
     return "Group has been updated"
 
 def delete(group_id):
@@ -67,7 +74,7 @@ def get_all(user_id):
         db.execute("""
             SELECT json_agg(friend_rows)
             FROM (
-                SELECT id, name, last_interaction, owner_id
+                SELECT id, name, last_interaction, owner
                 FROM group_memberships
                 LEFT JOIN groups
                     ON group_id = id
@@ -102,3 +109,19 @@ def get_members(group_id):
         members.append(User(member))
     
     return members
+
+def add_member(group_id, user_id):
+    with DBHandler() as db:
+            db.execute("""
+                INSERT INTO group_memberships(group_id, user_id, joined_at)
+                VALUES(%s, %s, 'now');
+            """, [group_id, user_id])
+    return "User added to group"
+
+def remove_member(group_id, user_id):
+    with DBHandler() as db:
+            db.execute("""
+                DELETE FROM group_memberships
+                WHERE group_id = %s AND user_id = %s;
+            """, [group_id, user_id])
+    return "User removed from group"

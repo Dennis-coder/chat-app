@@ -1,8 +1,11 @@
 <template>
   <div class="flex flex-col h-full">
-    <div class="w-full h-10 bg-gray-70 bg-opacity-80 center-me">
-      <h2 v-if="friend" class="text-2xl">{{ friend.username }}</h2>
-    </div>
+    <NavbarLite
+      v-if="friend"
+      :text="friend.username"
+      @back="back"
+      @toggleSettings="toggleSettings"
+    />
     <div
       v-if="messages && !loadingMessages"
       class="max-w-sm w-full px-2 space-y-2 overflow-y-scroll pt-2 pb-14 mt-auto"
@@ -36,19 +39,24 @@
         <img src="../assets/send.png" class="h-5" />
       </button>
     </form>
+    <FriendSettingsModal v-if="showSettings" @close="toggleSettings" :friend="friend" />
   </div>
 </template>
 
 <script>
 import axios from "axios";
 import Message from "../components/Message.vue";
+import NavbarLite from "../components/NavbarLite.vue";
+import FriendSettingsModal from "../components/FriendSettingsModal.vue";
 import { ref, nextTick } from "vue";
 import { useStore } from "vuex";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 
 export default {
   components: {
     Message,
+    NavbarLite,
+    FriendSettingsModal,
   },
   setup() {
     const friend = ref(null);
@@ -58,9 +66,11 @@ export default {
     const text = ref("");
     const messagesHeight = ref(0);
     const loadingMessages = ref(true);
+    const showSettings = ref(false);
 
     const route = useRoute();
     const store = useStore();
+    const router = useRouter();
     const user = ref(store.state.user);
     const socket = store.state.socket;
 
@@ -74,7 +84,7 @@ export default {
     const loadData = async function () {
       if (store.state.friends.length > 0) {
         friend.value = store.state.friends.find(
-          (friend) => (friend.id = route.params.id)
+          (friend) => friend.id === parseInt(route.params.id)
         );
       } else {
         friend.value = (
@@ -121,6 +131,14 @@ export default {
       });
     };
 
+    const toggleSettings = function () {
+      showSettings.value = !showSettings.value;
+    };
+
+    const back = function () {
+      router.push("/home");
+    };
+
     window.addEventListener("resize", resizeEvent);
     loadData();
     nextTick(() => {
@@ -138,6 +156,9 @@ export default {
       socket,
       messagesDiv,
       sendMessage,
+      toggleSettings,
+      showSettings,
+      back,
     };
   },
 };

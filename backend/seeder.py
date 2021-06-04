@@ -64,7 +64,7 @@ def create_tables(db):
             id SERIAL PRIMARY KEY,
             name VARCHAR(25) NOT NULL,
             last_interaction TIMESTAMP NOT NULL,
-            owner_id INTEGER NOT NULL REFERENCES users(id)
+            owner INTEGER NOT NULL REFERENCES users(id)
         );
     """)
     db.execute("""
@@ -148,17 +148,17 @@ def populate_tables(db):
         """, [user_id, user2_id, status])
 
     groups = [
-        {"name": "test group 1", "owner_id": 4},
-        {"name": "test group 2", "owner_id": 4},
+        {"name": "test group 1", "owner": 4},
+        {"name": "test group 2", "owner": 4},
     ]
 
     for group in groups:
         name = group["name"]
-        owner_id = group["owner_id"]
+        owner = group["owner"]
         db.execute("""
-            INSERT INTO groups(name, last_interaction, owner_id) 
+            INSERT INTO groups(name, last_interaction, owner) 
             VALUES(%s, 'now', %s);
-        """, [name, owner_id])
+        """, [name, owner])
 
     group_memberships = [
         {"group_id": 1, "user_id": 1},

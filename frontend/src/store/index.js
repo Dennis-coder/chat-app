@@ -18,6 +18,7 @@ export default createStore({
     friends: [],
     groups: [],
     socket,
+    tab: 0
   },
   mutations: {
     setUser(state, newUser) {
@@ -27,7 +28,7 @@ export default createStore({
       state.friends = friends
     },
     addFriend(state, friend) {
-      state.friends.unshift(friend)
+      state.friends.push(friend)
     },
     removeFriend(state, friendId) {
       let index = state.friends.findIndex(f => f.id = friendId)
@@ -36,12 +37,22 @@ export default createStore({
     setGroups(state, groups) {
       state.groups = groups
     },
+    addGroup(state, group) {
+      state.groups.push(group)
+    },
+    removeGroup(state, groupId) {
+      let index = state.groups.findIndex(g => g.id = groupId)
+      state.groups.splice(index, 1)
+    },
     setSocket(state, socket) {
       if (state.socket) {
         state.socket.disconnect()
       }
       state.socket = socket
-    }
+    },
+    setTab(state, tab) {
+      state.tab = tab
+    },
   },
   actions: {
     setUser({ commit }, userToken) {
@@ -65,6 +76,15 @@ export default createStore({
     },
     setGroups({ commit }, groups) {
       commit('setGroups', groups)
+    },
+    addGroup({ commit }, group) {
+      commit('addGroup', group)
+    },
+    removeGroup({ commit }, groupId) {
+      commit('removeGroup', groupId)
+    },
+    setTab({ commit }, tab) {
+      commit('setTab', tab)
     },
   },
   modules: {

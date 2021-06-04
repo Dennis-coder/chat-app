@@ -20,13 +20,13 @@ io.on('connection', (socket) => {
 
   socket.on('join-group', groupId => {
     group = `group-${groupId}`
-    console.log(`joined ${group}`)
+    console.log(`${socket.user.username} joined ${group}`)
     socket.join(group)
   })
 
   socket.on('leave-group', groupId => {
     group = `group-${groupId}`
-    console.log(`left ${group}`)
+    console.log(`${socket.user.username} left ${group}`)
     socket.leave(group)
   })
 

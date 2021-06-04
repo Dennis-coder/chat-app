@@ -1,8 +1,11 @@
 <template>
   <div class="flex flex-col h-full">
-    <div class="w-full h-10 bg-gray-70 bg-opacity-80 center-me">
-      <h2 v-if="group" class="text-2xl">{{ group.name }}</h2>
-    </div>
+    <NavbarLite
+      v-if="group"
+      :text="group.name"
+      @back="back"
+      @toggleSettings="toggleSettings"
+    />
     <div
       v-if="messages && !loadingMessages"
       class="max-w-sm w-full px-2 space-y-2 overflow-y-scroll pt-2 pb-14 mt-auto"
@@ -36,32 +39,45 @@
         <img src="../assets/send.png" class="h-5" />
       </button>
     </form>
+    <GroupSettingsModal
+      v-if="showSettings"
+      @close="toggleSettings"
+      @remove="removeUserFromGroup"
+      :group="group"
+      :members="members"
+    />
   </div>
 </template>
 
 <script>
 import axios from "axios";
 import Message from "../components/Message.vue";
+import NavbarLite from "../components/NavbarLite.vue";
+import GroupSettingsModal from "../components/GroupSettingsModal.vue";
 import { ref, nextTick, onUnmounted } from "vue";
 import { useStore } from "vuex";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 
 export default {
   components: {
     Message,
+    NavbarLite,
+    GroupSettingsModal,
   },
   setup() {
     const group = ref(null);
-    const friends = ref(null);
+    const members = ref(null);
     const messages = ref(null);
     const messagesDiv = ref(null);
 
     const text = ref("");
     const messagesHeight = ref(0);
     const loadingMessages = ref(true);
+    const showSettings = ref(false);
 
     const route = useRoute();
     const store = useStore();
+    const router = useRouter();
     const user = ref(store.state.user);
     const socket = store.state.socket;
 
@@ -75,7 +91,7 @@ export default {
     const loadData = async function () {
       if (store.state.groups.length > 0) {
         group.value = store.state.groups.find(
-          (group) => (group.id = route.params.id)
+          (group) => group.id === parseInt(route.params.id)
         );
       } else {
         group.value = (
@@ -91,13 +107,14 @@ export default {
         })
       ).data;
 
-      friends.value = (
+      members.value = (
         await axios.get("/api/v1/group/members", {
           params: { group_id: route.params.id },
         })
       ).data;
 
       loadingMessages.value = false;
+      resizeEvent();
     };
 
     const sendMessage = async function () {
@@ -115,7 +132,7 @@ export default {
     };
 
     const resizeEvent = function () {
-      messagesHeight.value = window.innerHeight - 88;
+      messagesHeight.value = window.innerHeight - 48;
     };
 
     const scrollDown = async function () {
@@ -128,6 +145,22 @@ export default {
         }
       });
     };
+
+    const toggleSettings = function () {
+      showSettings.value = !showSettings.value;
+    };
+
+    const back = function () {
+      router.push("/home");
+    };
+
+    const removeUserFromGroup = async function (id) {
+      await axios.delete("/api/v1/group/member", {
+        data: { user_id: id, group_id: group.value.id },
+      });
+      let index = members.value.findIndex(m => m.id === id)
+      members.value.splice(index, 1)
+    }
 
     loadData();
     window.addEventListener("resize", resizeEvent);
@@ -142,7 +175,7 @@ export default {
 
     return {
       group,
-      friends,
+      members,
       user,
       messages,
       text,
@@ -151,6 +184,10 @@ export default {
       socket,
       messagesDiv,
       sendMessage,
+      toggleSettings,
+      showSettings,
+      back,
+      removeUserFromGroup
     };
   },
 };
