@@ -1,47 +1,42 @@
 from models.db_handler import DBHandler
 from models.helpers import parse_timestamp
+import models.group as Group
 
-def GroupMessage(params):
+def GroupMessageBean(params):
     return {
-        "id": params["id"],
-        "text": params['text'],
-        "timestamp": parse_timestamp(params['timestamp']),
-        "senderId": params['sender_id'],
-        "groupId": params['group_id']
+        "id": params[0],
+        "text": params[1],
+        "timestamp": parse_timestamp(params[2]),
+        "senderId": params[3],
+        "groupId": params[4]
     }
 
 
 def get(id):
     with DBHandler() as db:
         db.execute("""
-            SELECT row_to_json(message_row)
-            FROM (
-                SELECT *
-                FROM group_messages 
-                WHERE id = %s
-            ) AS message_row;
+            SELECT *
+            FROM group_messages 
+            WHERE id = %s;
         """, [id])
-        message = db.one()[0]
-    return GroupMessage(message)
+        message = db.one()
+    return GroupMessageBean(message)
 
 def get_all(group_id):
     with DBHandler() as db:
         db.execute("""
-            SELECT json_agg(message_rows)
-            FROM (
-                SELECT *
-                FROM group_messages
-                WHERE group_id = %s
-            ) AS message_rows
+            SELECT *
+            FROM group_messages
+            WHERE group_id = %s;
         """, [group_id])
         
-        from_db = db.all()[0][0]
-        messages = []
-        if from_db:
-            for message in from_db:
-                messages.append(GroupMessage(message))
+        from_db = db.all()
+    messages = []
+    if from_db:
+        for message in from_db:
+            messages.append(GroupMessageBean(message))
 
-        return messages
+    return messages
 
 def new(text, sender_id, group_id):
     with DBHandler() as db:
@@ -52,4 +47,5 @@ def new(text, sender_id, group_id):
         """, [text, sender_id, group_id])
 
         id = db.one()[0]
-        return id
+    Group.update_last_interaction(group_id)
+    return get(id)

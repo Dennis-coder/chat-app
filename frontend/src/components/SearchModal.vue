@@ -22,12 +22,12 @@
           @remove="remove"
         />
       </div>
-      <div v-else-if="term.length > 0" class="w-3/4 z-10 bg-gray-40 p-2">
+      <div v-else-if="term.length > 0" class="z-10 bg-gray-40 p-2">
         <p>No results</p>
       </div>
       <div
-        v-else-if="requests"
-        class="w-3/4 z-10 bg-gray-40 p-2 divide-y divide-gray-200 mt-2"
+        v-else-if="requests && requests.length > 0"
+        class="overflow-y-scroll w-full divide-y divide-gray-500 bg-gray-70 rounded-md py-1 border border-gray-500"
       >
         <SearchResult
           v-for="request in requests"

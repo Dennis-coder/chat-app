@@ -99,14 +99,18 @@ export default {
     const friends = computed(() => store.state.friends);
     const groups = computed(() => store.state.groups);
 
+    const friendsSorted = computed(() => [...friends.value].sort((a,b) => a.lastInteraction.split(' ')[1] > b.lastInteraction.split(' ')[1] ? -1 : a.lastInteraction.split(' ')[1] < b.lastInteraction.split(' ')[1] ? 1 : a.lastInteraction.split(' ')[0] > b.lastInteraction.split(' ')[0] ? -1 : 1))
+
     const friendsFiltered = computed(() =>
-      friends.value.filter((friend) =>
+      friendsSorted.value.filter((friend) =>
         friend.username.toLowerCase().includes(searchTerm.value)
       )
     );
 
+    const groupsSorted = computed(() => [...groups.value].sort((a,b) => a.lastInteraction.split(' ')[1] > b.lastInteraction.split(' ')[1] ? -1 : a.lastInteraction.split(' ')[1] < b.lastInteraction.split(' ')[1] ? 1 : a.lastInteraction.split(' ')[0] > b.lastInteraction.split(' ')[0] ? -1 : 1))
+
     const groupsFiltered = computed(() =>
-      groups.value.filter((group) =>
+      groupsSorted.value.filter((group) =>
         group.name.toLowerCase().includes(searchTerm.value)
       )
     );

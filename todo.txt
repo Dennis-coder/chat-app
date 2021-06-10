@@ -1,13 +1,12 @@
 Backend
--update last_interaction on interaction
--send reports
 -get reports
 -update reports
 -delete reports
--set new owner when prev owner leaves group
+-authorize users on requests
 
 Frontend
 -responsiveness/css for tablets and desktops
+-admin view
 
 Sockets
 -notify when recieving new messages

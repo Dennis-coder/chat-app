@@ -113,9 +113,13 @@ export default {
       router.push("/home");
     };
 
-    const remove = async function (id) {
+    const remove = function (id) {
       emit("remove", id);
     };
+
+    const add = function (id) {
+      emit('add', id)
+    }
 
     const deleteGroup = async function () {
       await axios.delete("/api/v1/group", {
@@ -135,6 +139,7 @@ export default {
       membersFiltered,
       friendsFilter,
       friendsFiltered,
+      add,
     };
   },
 };

@@ -38,7 +38,7 @@
 </template>
 
 <script>
-import Navbar from '../components/Navbar.vue'
+import Navbar from "../components/Navbar.vue";
 import axios from "axios";
 import { ref, computed } from "vue";
 import { useStore } from "vuex";
@@ -46,7 +46,7 @@ import { useRouter } from "vue-router";
 
 export default {
   components: {
-    Navbar
+    Navbar,
   },
   setup() {
     const username = ref("");
@@ -60,8 +60,9 @@ export default {
 
     const login = async function () {
       let response = (
-        await axios.get("/api/v1/user", {
-          params: { username: username.value, password: password.value },
+        await axios.post("/api/v1/user/login", {
+          username: username.value,
+          password: password.value,
         })
       ).data;
       if (response.status === "error") {

@@ -2,43 +2,37 @@ import jwt
 import bcrypt
 
 from models.db_handler import DBHandler
-from models.friend import Friend
+from models.friend import RequestBean
 
 
-def User(params):
+def UserBean(params):
     return {
-        "id": params['id'],
-        "username": params['username'],
-        "role": params['role']
+        "id": params[0],
+        "username": params[1],
+        "role": params[2]
     }
 
 
 def get(id):
     with DBHandler() as db:
         db.execute("""
-            SELECT row_to_json(user_row)
-            FROM (
-                SELECT id, username, role 
-                FROM users 
-                WHERE id = %s
-            ) AS user_row;
+            SELECT id, username, role 
+            FROM users 
+            WHERE id = %s;
         """, [id])
-        user = db.one()[0]
-    return User(user)
+        user = db.one()
+    return UserBean(user)
 
 def login(username, password):
     with DBHandler() as db:
         db.execute("""
-            SELECT row_to_json(user_row)
-            FROM (
-                SELECT *
-                FROM users 
-                WHERE username = %s
-            ) AS user_row;
+            SELECT id, username, role, pwd_hash
+            FROM users 
+            WHERE username = %s;
         """, [username])
         user = db.one()
-    if user and bcrypt.checkpw(password.encode(), user[0]['pwd_hash'].encode()):
-        return User(user[0])
+    if user and bcrypt.checkpw(password.encode(), user[3].encode()):
+        return UserBean(user)
     else:
         return "Incorrect credentials"
 
@@ -89,50 +83,41 @@ def delete(user_id):
 def search(term, user_id):
     with DBHandler() as db:
         db.execute("""
-            SELECT row_to_json(user_row)
-            FROM (
-                SELECT id, username, status, user_id AS sent_by
-                FROM users 
-                LEFT JOIN friendships
-                    ON (user_id = id AND user2_id = %s) OR (user_id = %s AND user2_id = id)
-                WHERE username ILIKE %s
-            ) AS user_row;
+            SELECT id, username, status, user_id AS sent_by
+            FROM users 
+            LEFT JOIN friendships
+                ON (user_id = id AND user2_id = %s) OR (user_id = %s AND user2_id = id)
+            WHERE username ILIKE %s;
         """, [user_id, user_id, term])
 
         perfect_match = db.one()
 
         db.execute("""
-            SELECT json_agg(user_rows)
-            FROM (
-                SELECT id, username, status, user_id AS sent_by
-                FROM users
-                LEFT JOIN friendships
-                    ON (user_id = id AND user2_id = %s) OR (user_id = %s AND user2_id = id)
-                WHERE username NOT ILIKE %s 
-                AND username ILIKE %s
-            ) AS user_rows;
+            SELECT id, username, status, user_id AS sent_by
+            FROM users
+            LEFT JOIN friendships
+                ON (user_id = id AND user2_id = %s) OR (user_id = %s AND user2_id = id)
+            WHERE username NOT ILIKE %s 
+            AND username ILIKE %s;
         """, [user_id, user_id, term, f"{term}%"])
 
-        prefix_matches = db.all()[0][0]
+        prefix_matches = db.all()
 
         db.execute("""
-            SELECT json_agg(user_rows)
-            FROM (
-                SELECT id, username, status, user_id AS sent_by
-                FROM users
-                LEFT JOIN friendships
-                    ON (user_id = id AND user2_id = %s) OR (user_id = %s AND user2_id = id)
-                WHERE username NOT ILIKE %s 
-                AND username NOT ILIKE %s
-                AND username ILIKE %s
-            ) AS user_rows;
+            SELECT id, username, status, user_id AS sent_by
+            FROM users
+            LEFT JOIN friendships
+                ON (user_id = id AND user2_id = %s) OR (user_id = %s AND user2_id = id)
+            WHERE username NOT ILIKE %s 
+            AND username NOT ILIKE %s
+            AND username ILIKE %s;
         """, [user_id, user_id, term, f"{term}%", f"%{term}%"])
 
-        partial_matches = db.all()[0][0]
+        partial_matches = db.all()
     
-    users = [perfect_match[0]] if perfect_match else []
-    users = users + prefix_matches if prefix_matches else users
-    users = users + partial_matches if partial_matches else users
+    users = [RequestBean(perfect_match)] if perfect_match else []
+    users = users + [RequestBean(x) for x in prefix_matches]
+    users = users + [RequestBean(x) for x in partial_matches]
 
     return users
 

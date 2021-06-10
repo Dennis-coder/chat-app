@@ -1,2 +1,2 @@
 def parse_timestamp(timestamp):
-    return ' '.join(timestamp.split('.')[0].split('T')[::-1])
+    return timestamp.strftime("%H:%M:%S %Y-%m-%d") 

@@ -16,10 +16,8 @@ class DBHandler:
         else:
             conn.commit()
 
-
-    def execute(self, query, values):
-        if query[-1] != ";":
-            query += ";"
+    def execute(self, query, values = []):
+        query += ";"
         self.cur.execute(query, values)
 
     def one(self):
@@ -28,3 +26,27 @@ class DBHandler:
     def all(self):
         return self.cur.fetchall()
 
+class Transaction():
+    def __enter__(self):
+        self.cur = conn.cursor()
+        self.cur.execute("BEGIN;")
+        return self
+
+    def __exit__(self, exc_type, exc_value, tb):
+        if exc_type != None:
+            traceback.print_exception(exc_type, exc_value, tb)
+            self.cur.execute("ROLLBACK;")
+        else:
+            self.cur.execute("COMMIT;")
+            conn.commit()
+        self.cur.close()
+
+    def execute(self, query, values = []):
+        query += ";"
+        self.cur.execute(query, values)
+    
+    def one(self):
+        return self.cur.fetchone()
+
+    def all(self):
+        return self.cur.fetchall()

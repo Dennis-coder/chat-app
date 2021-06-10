@@ -44,7 +44,7 @@ def create_tables(db):
         CREATE TABLE messages(
             id SERIAL PRIMARY KEY,
             text VARCHAR(255) NOT NULL,
-            timestamp TIMESTAMP NOT NULL,
+            sent_at TIMESTAMP NOT NULL,
             sender_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
             reciever_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE
         );
@@ -78,7 +78,7 @@ def create_tables(db):
         CREATE TABLE group_messages(
             id SERIAL PRIMARY KEY,
             text VARCHAR(255) NOT NULL,
-            timestamp TIMESTAMP NOT NULL,
+            sent_at TIMESTAMP NOT NULL,
             sender_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
             group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE
         );
@@ -89,7 +89,8 @@ def create_tables(db):
             plaintiff_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
             defendant_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
             reason TEXT NOT NULL,
-            status VARCHAR(10) NOT NULL
+            status VARCHAR(10) NOT NULL,
+            created_at TIMESTAMP NOT NULL
         );
     """)
 
@@ -127,7 +128,7 @@ def populate_tables(db):
         sender_id = message["sender_id"]
         reciever_id = message["reciever_id"]
         db.execute("""
-            INSERT INTO messages(text, timestamp, sender_id, reciever_id) 
+            INSERT INTO messages(text, sent_at, sender_id, reciever_id) 
             VALUES (%s, 'now', %s, %s);
         """, [text, sender_id, reciever_id])
 
@@ -135,7 +136,7 @@ def populate_tables(db):
         {"user_id": 1, "user2_id": 2, "status": 0},
         {"user_id": 3, "user2_id": 1, "status": 0},
         {"user_id": 4, "user2_id": 2, "status": 0},
-        {"user_id": 3, "user2_id": 4, "status": 0}
+        {"user_id": 3, "user2_id": 4, "status": 1}
     ]
 
     for friend in friends:
@@ -175,6 +176,20 @@ def populate_tables(db):
             INSERT INTO group_memberships(group_id, user_id, joined_at)
             VALUES(%s, %s, 'now')
         """, [group_id, user_id])
+    
+    group_messages = [
+        {"text": "testerino", "sender_id": 4, "group_id": 1},
+        {"text": "testerino", "sender_id": 2, "group_id": 1},
+    ]
+
+    for m in group_messages:
+        text = m["text"]
+        sender_id = m["sender_id"]
+        group_id = m["group_id"]
+        db.execute("""
+            INSERT INTO group_messages(text, sent_at, sender_id, group_id)
+            VALUES(%s, 'now', %s, %s)
+        """, [text, sender_id, group_id])
 
 
 if __name__ == "__main__":

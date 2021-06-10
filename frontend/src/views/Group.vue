@@ -43,6 +43,7 @@
       v-if="showSettings"
       @close="toggleSettings"
       @remove="removeUserFromGroup"
+      @add="addUserToGroup"
       :group="group"
       :members="members"
     />
@@ -158,9 +159,19 @@ export default {
       await axios.delete("/api/v1/group/member", {
         data: { user_id: id, group_id: group.value.id },
       });
-      let index = members.value.findIndex(m => m.id === id)
-      members.value.splice(index, 1)
-    }
+      let index = members.value.findIndex((m) => m.id === id);
+      members.value.splice(index, 1);
+    };
+
+    const addUserToGroup = async function (id) {
+      let member = (
+        await axios.post("/api/v1/group/member", {
+          user_id: id,
+          group_id: group.value.id,
+        })
+      ).data;
+      members.value.push(member);
+    };
 
     loadData();
     window.addEventListener("resize", resizeEvent);
@@ -187,7 +198,8 @@ export default {
       toggleSettings,
       showSettings,
       back,
-      removeUserFromGroup
+      removeUserFromGroup,
+      addUserToGroup,
     };
   },
 };

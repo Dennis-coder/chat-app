@@ -5,14 +5,13 @@ import models.friend as Friend
 import models.group as Group
 import models.message as Message
 import models.group_message as GroupMessage
+import models.report as Report
 
 app = Flask(__name__)
 
-@app.route("/api/v1/user", methods=["GET", "POST", "PUT", "DELETE"])
+@app.route("/api/v1/user", methods=["POST", "PUT", "DELETE"])
 def user():
-    if request.method == "GET":
-        return login()
-    elif request.method == "POST":
+    if request.method == "POST":
         return register()
     elif request.method == "PUT":
         return update_user()
@@ -35,8 +34,17 @@ def register():
 
     return jsonify(response)
 
+def update_user():
+    response = User.update(**request.json)
+    return response
+
+def delete_user():
+    response = User.delete(request.data.decode())
+    return response
+
+@app.route("/api/v1/user/login", methods=["POST"])
 def login():
-    user = User.login(**request.args)
+    user = User.login(**request.json)
     if isinstance(user, str):
         response = {
             "status": "error",
@@ -50,14 +58,6 @@ def login():
         }
 
     return jsonify(response)
-
-def update_user():
-    response = User.update(**request.json)
-    return response
-
-def delete_user():
-    response = User.delete(request.data.decode())
-    return response
 
 @app.route("/api/v1/user/find", methods=["GET"])
 def find():
@@ -87,8 +87,8 @@ def all_friends():
 @app.route("/api/v1/friend/message", methods=["POST"])
 def message():
     if request.method == "POST":
-        id = Message.new(**request.get_json())
-        return Message.get(id)
+        message = Message.new(**request.get_json())
+        return message
 
 @app.route("/api/v1/friend/messages", methods=["GET"])
 def all_messages():
@@ -123,8 +123,8 @@ def all_groups():
 @app.route("/api/v1/group/message", methods=["POST"])
 def group_message():
     if request.method == "POST":
-        id = GroupMessage.new(**request.get_json())
-        return GroupMessage.get(id)
+        message = GroupMessage.new(**request.get_json())
+        return message
 
 @app.route("/api/v1/group/messages", methods=["GET"])
 def all_group_messages():
@@ -144,3 +144,13 @@ def member():
 def group_members():
     members = Group.get_members(**request.args)
     return jsonify(members)
+
+@app.route("/api/v1/report", methods=["POST", "PUT", "DELETE"])
+def report():
+    if request.method == "POST":
+        report = Report.new(**request.json)
+        return jsonify(report)
+    elif request.method == "PUT":
+        return Report.update(**request.json)
+    elif request.method == "DELETE":
+        return Report.delete(**request.json)

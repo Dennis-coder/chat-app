@@ -17,6 +17,7 @@
     </button>
     <div
       v-else-if="result.status === 1 && result.sent_by !== user.id"
+      class="flex"
     >
       <button class="button3" @click="accept">Accept</button>
       <button class="button3" @click="remove">Remove</button>

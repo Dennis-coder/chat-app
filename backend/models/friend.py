@@ -2,62 +2,64 @@ from models.db_handler import DBHandler
 from models.helpers import parse_timestamp
 
 
-def Friend(params):
+def FriendBean(params):
     return {
-        "id": params['id'],
-        "username": params['username'],
-        "lastInteraction": parse_timestamp(params["last_interaction"]),
-        "friendsSince": parse_timestamp(params["friends_since"])
+        "id": params[0],
+        "username": params[1],
+        "lastInteraction": parse_timestamp(params[2]),
+        "friendsSince": parse_timestamp(params[3])
+    }
+
+def RequestBean(params):
+    return {
+        "id": params[0],
+        "username": params[1],
+        "status": params[2],
+        "sentBy": params[3]
     }
 
 
 def get_all(user_id):
     with DBHandler() as db:
         db.execute("""
-            SELECT json_agg(friend_rows)
-            FROM (
-                SELECT user_id AS id, username, last_interaction, friends_since
-                FROM friendships
-                LEFT JOIN users
-                    ON user_id = id
-                WHERE user2_id = %s AND status = 0
-                UNION
-                SELECT user2_id AS id, username, last_interaction, friends_since
-                FROM friendships
-                LEFT JOIN users
-                    ON user2_id = id
-                WHERE user_id = %s AND status = 0
-            ) AS friend_rows
+            SELECT user_id AS id, username, last_interaction, friends_since
+            FROM friendships
+            LEFT JOIN users
+                ON user_id = id
+            WHERE user2_id = %s AND status = 0
+            UNION
+            SELECT user2_id AS id, username, last_interaction, friends_since
+            FROM friendships
+            LEFT JOIN users
+                ON user2_id = id
+            WHERE user_id = %s AND status = 0;
         """, [user_id, user_id])
 
-        from_db = db.all()[0][0]
-        friends = []
-        if from_db:
-            for friend in from_db:
-                friends.append(Friend(friend))
-        
-        return friends
+        from_db = db.all()
+    friends = []
+    if from_db:
+        for row in from_db:
+            friends.append(FriendBean(row))
+    
+    return friends
 
 def get(user_id, friend_id):
     with DBHandler() as db:
         db.execute("""
-            SELECT row_to_json(friend_row)
-            FROM (
-                SELECT user_id AS id, username, last_interaction, friends_since
-                FROM friendships
-                LEFT JOIN users
-                    ON user_id = id
-                WHERE user2_id = %s AND user_id = %s
-                UNION
-                SELECT user2_id AS id, username, last_interaction, friends_since
-                FROM friendships
-                LEFT JOIN users
-                    ON user2_id = id
-                WHERE user_id = %s AND user2_id = %s
-            ) AS friend_row;
+            SELECT user_id AS id, username, last_interaction, friends_since
+            FROM friendships
+            LEFT JOIN users
+                ON user_id = id
+            WHERE user2_id = %s AND user_id = %s
+            UNION
+            SELECT user2_id AS id, username, last_interaction, friends_since
+            FROM friendships
+            LEFT JOIN users
+                ON user2_id = id
+            WHERE user_id = %s AND user2_id = %s;
         """, [user_id, friend_id, user_id, friend_id])
-        friend = db.one()[0]
-    return Friend(friend)
+        friend = db.one()
+    return FriendBean(friend)
 
 def add(user_id, friend_id):
     with DBHandler() as db:
@@ -76,7 +78,8 @@ def accept(user_id, friend_id):
             WHERE (user_id, user2_id) = (%s, %s) OR (user_id, user2_id) = (%s, %s);
         """, [user_id, friend_id, friend_id, user_id])
 
-        return get(user_id, friend_id)
+    update_last_interaction(user_id, friend_id)
+    return get(user_id, friend_id)
 
 def remove(user_id, friend_id):
     with DBHandler() as db:
@@ -90,16 +93,25 @@ def remove(user_id, friend_id):
 def requests(user_id):
     with DBHandler() as db:
         db.execute("""
-            SELECT json_agg(user_rows)
-            FROM (
-                SELECT id, username, status, user_id AS sent_by
-                FROM users
-                LEFT JOIN friendships
-                    ON (user_id = id AND user2_id = %s) OR (user_id = %s AND user2_id = id)
-                WHERE status = 1
-            ) AS user_rows;
+            SELECT id, username, status, user_id AS sent_by
+            FROM users
+            LEFT JOIN friendships
+                ON (user_id = id AND user2_id = %s) OR (user_id = %s AND user2_id = id)
+            WHERE status = 1;
         """, [user_id, user_id])
 
-        requests = db.all()[0][0]
+        from_db = db.all()
+    requests = []
+    if from_db:
+        for row in from_db:
+            requests.append(RequestBean(row))
+    return requests
 
-        return requests
+def update_last_interaction(user_id, friend_id):
+    with DBHandler() as db:
+        db.execute("""
+            UPDATE friendships
+            SET last_interaction = 'now'
+            WHERE (user_id = %s AND user2_id = %s) OR (user2_id = %s AND user_id = %s);
+        """, [user_id, friend_id, user_id, friend_id])
+    return "Last interaction has been updated"

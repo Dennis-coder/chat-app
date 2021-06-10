@@ -1,30 +1,27 @@
-from models.db_handler import DBHandler
-from models.user import User
+from models.db_handler import DBHandler, Transaction
+from models.user import UserBean, get as get_user
 from models.helpers import parse_timestamp
 
 
-def Group(params):
+def GroupBean(params):
     return {
-        "id": params["id"],
-        "name": params["name"],
-        "lastInteraction": parse_timestamp(params["last_interaction"]),
-        "owner": params["owner"]
+        "id": params[0],
+        "name": params[1],
+        "lastInteraction": parse_timestamp(params[2]),
+        "owner": params[3]
     }
 
 
 def get(group_id):
     with DBHandler() as db:
         db.execute("""
-            SELECT row_to_json(group_row)
-            FROM (
-                SELECT *
-                FROM groups
-                WHERE id = %s
-            ) AS group_row
+            SELECT *
+            FROM groups
+            WHERE id = %s;
         """, [group_id])
 
-        group = db.one()[0]
-    return Group(group)
+        group = db.one()
+    return GroupBean(group)
 
 def create(name, owner):
     with DBHandler() as db:
@@ -72,56 +69,72 @@ def delete(group_id):
 def get_all(user_id):
     with DBHandler() as db:
         db.execute("""
-            SELECT json_agg(friend_rows)
-            FROM (
-                SELECT id, name, last_interaction, owner
-                FROM group_memberships
-                LEFT JOIN groups
-                    ON group_id = id
-                WHERE user_id = %s
-            ) AS friend_rows
+            SELECT id, name, last_interaction, owner
+            FROM group_memberships
+            LEFT JOIN groups
+                ON group_id = id
+            WHERE user_id = %s;
         """, [user_id])
 
-        from_db = db.all()[0][0]
+        from_db = db.all()
     groups = []
     if from_db:
         for group in from_db:
-            groups.append(Group(group))
+            groups.append(GroupBean(group))
     
     return groups
 
 def get_members(group_id):
     with DBHandler() as db:
         db.execute("""
-            SELECT json_agg(members)
-            FROM (
-                SELECT id, username, role
-                FROM group_memberships
-                LEFT JOIN users
-                    ON user_id = id
-                WHERE group_id = %s
-            ) AS members
+            SELECT id, username, role
+            FROM group_memberships
+            LEFT JOIN users
+                ON user_id = id
+            WHERE group_id = %s;
         """, [group_id])
 
-        from_db = db.all()[0][0]
+        from_db = db.all()
     members = []
     for member in from_db:
-        members.append(User(member))
+        members.append(UserBean(member))
     
     return members
 
 def add_member(group_id, user_id):
     with DBHandler() as db:
-            db.execute("""
-                INSERT INTO group_memberships(group_id, user_id, joined_at)
-                VALUES(%s, %s, 'now');
-            """, [group_id, user_id])
-    return "User added to group"
+        db.execute("""
+            INSERT INTO group_memberships(group_id, user_id, joined_at)
+            VALUES(%s, %s, 'now');
+        """, [group_id, user_id])
+    return get_user(user_id)
 
 def remove_member(group_id, user_id):
-    with DBHandler() as db:
+    with Transaction() as db:
+        db.execute("""
+            DELETE FROM group_memberships
+            WHERE group_id = %s AND user_id = %s
+        """, [group_id, user_id])
+        group = get(group_id)
+        if group["owner"] == user_id:
             db.execute("""
-                DELETE FROM group_memberships
-                WHERE group_id = %s AND user_id = %s;
-            """, [group_id, user_id])
+                SELECT * 
+                FROM group_memberships
+                WHERE group_id = %s
+            """, [group_id])
+            id = db.one()[0]
+            db.execute("""
+                UPDATE groups
+                SET owner = %s
+                WHERE id = %s;
+            """, [id, group_id])
     return "User removed from group"
+
+def update_last_interaction(group_id):
+    with DBHandler() as db:
+        db.execute("""
+            UPDATE groups
+            SET last_interaction = 'now'
+            WHERE id = %s;
+        """, [group_id])
+    return "Last interaction has been updated"

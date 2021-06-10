@@ -1,10 +1,6 @@
 <template>
   <div class="center-me flex-col h-full">
-    <NavbarLite
-      :text="'Settings'"
-      :settings="false"
-      @back="back"
-    />
+    <NavbarLite :text="'Settings'" :settings="false" @back="back" />
     <div class="center-me flex-col pt-4">
       <button @click="togglePassword" class="form-button">
         Change password
@@ -58,7 +54,7 @@
       </form>
     </div>
 
-    <div class="mt-auto mb-4">
+    <div class="mt-auto mb-4 space-x-2">
       <button @click.prevent="logout" class="button2">Logout</button>
       <button @click.prevent="deleteAccount" class="button2">
         Delete account
@@ -69,14 +65,14 @@
 
 <script>
 import axios from "axios";
-import NavbarLite from '../components/NavbarLite.vue'
+import NavbarLite from "../components/NavbarLite.vue";
 import { ref } from "vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
 
 export default {
   components: {
-    NavbarLite
+    NavbarLite,
   },
   setup() {
     const store = useStore();
@@ -89,7 +85,8 @@ export default {
     });
     const report = ref({
       reason: "",
-      defendant: null,
+      defendant: "",
+      plaintiff_id: user.id,
     });
     const showPassword = ref(false);
     const showReport = ref(false);
@@ -112,8 +109,14 @@ export default {
       console.log(password.value);
     };
 
-    const sendReport = function () {
-      console.log(report.value);
+    const sendReport = async function () {
+      let response = (await axios.post("/api/v1/report", report.value)).data;
+      if (typeof response === "string") {
+        alert("No user with that username exists!");
+      } else {
+        report.value.reason = "";
+        report.value.defendant = "";
+      }
     };
 
     const logout = function () {
@@ -122,13 +125,15 @@ export default {
     };
 
     const deleteAccount = async function () {
-      await axios.delete("/api/v1/user", { data: user.id });
-      logout();
+      if (confirm("Are you sure you want to delete your account?")) {
+        await axios.delete("/api/v1/user", { data: user.id });
+        logout();
+      }
     };
 
     const back = async function () {
-      router.push('/home')
-    }
+      router.push("/home");
+    };
 
     return {
       password,
@@ -141,7 +146,7 @@ export default {
       sendReport,
       logout,
       deleteAccount,
-      back
+      back,
     };
   },
 };
