@@ -1,0 +1,52 @@
+version: "3.8"
+services:
+  database:
+    image: postgres
+    volumes:
+      - ./tmp/db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+
+  backend:
+    build: ./backend
+    command: bash -c "python3 -m flask run --host=0.0.0.0"
+    volumes:
+      - backend-sync:/app:nocopy
+    environment:
+      - POSTGRES_HOST=database
+    ports:
+      - "5000:5000"
+    links:
+      - database
+
+  frontend:
+    build: ./frontend
+    command: bash -c "npm run serve"
+    volumes:
+      - frontend-sync:/app:nocopy
+      - node_modules:/app/node_modules
+    ports:
+      - "8080:8080"
+    links: 
+      - backend
+      - sockets
+  
+  sockets:
+    build: ./sockets
+    command: bash -c "npm start"
+    volumes:
+      - sockets-sync:/app:nocopy
+    ports:
+      - "3000:3000"
+
+volumes:
+  bundles:
+  node_modules:
+  backend-sync:
+    external: true
+  frontend-sync:
+    external: true
+  sockets-sync:
+    external: true

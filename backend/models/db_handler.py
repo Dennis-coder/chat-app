@@ -1,12 +1,30 @@
 import psycopg2
 import traceback
+import time
 
-conn = psycopg2.connect(database="websnap", host="127.0.0.1", port="5432")
+def connect(tries = 0):
+    try:
+        return psycopg2.connect(database="db", host="database", port="5432", user="postgres", password="password")
+    except:
+        if tries == 0:
+            return None
+        time.sleep(0.5 * (5 / tries))
+        return connect(tries - 1)
+
+conn = connect()
+
 
 class DBHandler:
-
     def __enter__(self):
-        self.cur = conn.cursor()
+        global conn
+        if conn:
+            self.cur = conn.cursor()
+        else:
+            conn = connect()
+            if conn:
+                self.cur = conn.cursor()
+            else:
+                raise Exception("Database connection could not be established")
         return self
 
     def __exit__(self, exc_type, exc_value, tb):
@@ -16,9 +34,15 @@ class DBHandler:
         else:
             conn.commit()
 
-    def execute(self, query, values = []):
+    def execute(self, query, values = [], tries = 0):
         query += ";"
-        self.cur.execute(query, values)
+        try:
+            self.cur.execute(query, values)
+        except:
+            if tries == 0:
+                raise Exception("Database connection could not be established")
+            time.sleep(0.5 * (5 / tries))
+            self.execute(query, values, tries-1)
 
     def one(self):
         return self.cur.fetchone()

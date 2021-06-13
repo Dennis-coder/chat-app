@@ -19,7 +19,7 @@ def seed():
 
 
 def connect():
-    return psycopg2.connect(database="websnap", user="postgres", password="", host="127.0.0.1", port="5432")
+    return psycopg2.connect(database="db", host="127.0.0.1", port="5432", user="postgres", password="password")
 
 def drop_tables(db):
     db.execute("DROP TABLE IF EXISTS users CASCADE;")

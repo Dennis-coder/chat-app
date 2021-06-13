@@ -1,0 +1,4 @@
+.docker-sync
+tmp/
+backend/__pycache__
+backend/*/__pycache__

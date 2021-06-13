@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 import models.user as User
 import models.friend as Friend
@@ -8,6 +9,7 @@ import models.group_message as GroupMessage
 import models.report as Report
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route("/api/v1/user", methods=["POST", "PUT", "DELETE"])
 def user():
@@ -154,3 +156,7 @@ def report():
         return Report.update(**request.json)
     elif request.method == "DELETE":
         return Report.delete(**request.json)
+
+@app.route("/ping")
+def ping():
+    return "Hello!"

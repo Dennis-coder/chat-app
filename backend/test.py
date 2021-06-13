@@ -74,9 +74,12 @@ def user():
     for r in results:
         print(r)
 
-if __name__ == "__main__":
+def run_tests():
     friend()
     group_message()
     group()
     message()
     user()
+
+if __name__ == "__main__":
+    run_tests()

@@ -1,0 +1,14 @@
+version: 2
+syncs:
+  backend-sync:
+    src: './backend'
+    sync_strategy: 'native_osx'
+    sync_excludes: ['.git', '*.log']
+  frontend-sync:
+    src: './frontend'
+    sync_strategy: 'native_osx'
+    sync_excludes: ['.git', '*.log']
+  sockets-sync:
+    src: './sockets'
+    sync_strategy: 'native_osx'
+    sync_excludes: ['.git', '*.log']
