@@ -1,5 +1,6 @@
 flask
 flask_cors
+Flask-HTTPAuth
 bcrypt
 PyJWT
 psycopg2-binary

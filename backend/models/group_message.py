@@ -6,7 +6,7 @@ def GroupMessageBean(params):
     return {
         "id": params[0],
         "text": params[1],
-        "timestamp": parse_timestamp(params[2]),
+        "sent_at": parse_timestamp(params[2]),
         "senderId": params[3],
         "groupId": params[4]
     }
@@ -41,7 +41,7 @@ def get_all(group_id):
 def new(text, sender_id, group_id):
     with DBHandler() as db:
         db.execute("""
-            INSERT INTO group_messages(text, timestamp, sender_id, group_id)
+            INSERT INTO group_messages(text, sent_at, sender_id, group_id)
             VALUES(%s, 'now', %s, %s)
             RETURNING id;
         """, [text, sender_id, group_id])

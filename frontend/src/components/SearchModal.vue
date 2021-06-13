@@ -11,7 +11,15 @@
       />
       <div
         v-if="results.length > 0"
-        class="overflow-y-scroll w-full divide-y divide-gray-500 bg-gray-70 rounded-md py-1 border border-gray-500"
+        class="
+          overflow-y-scroll
+          w-full
+          divide-y divide-gray-500
+          bg-gray-70
+          rounded-md
+          py-1
+          border border-gray-500
+        "
       >
         <SearchResult
           v-for="result in results"
@@ -27,7 +35,15 @@
       </div>
       <div
         v-else-if="requests && requests.length > 0"
-        class="overflow-y-scroll w-full divide-y divide-gray-500 bg-gray-70 rounded-md py-1 border border-gray-500"
+        class="
+          overflow-y-scroll
+          w-full
+          divide-y divide-gray-500
+          bg-gray-70
+          rounded-md
+          py-1
+          border border-gray-500
+        "
       >
         <SearchResult
           v-for="request in requests"
@@ -65,7 +81,7 @@ export default {
       if (term.value.length > 0) {
         results.value = (
           await axios.get("/api/v1/user/find", {
-            params: { term: term.value, user_id: user.id },
+            params: { term: term.value },
           })
         ).data;
       } else {
@@ -75,7 +91,6 @@ export default {
 
     const add = async function (friend_id) {
       await axios.post("/api/v1/friend", {
-        user_id: user.id,
         friend_id,
       });
       let result = results.value.find((result) => result.id === friend_id);
@@ -86,7 +101,6 @@ export default {
     const accept = async function (friend_id) {
       let friend = (
         await axios.put("/api/v1/friend", {
-          user_id: user.id,
           friend_id,
         })
       ).data;
@@ -101,7 +115,7 @@ export default {
 
     const remove = async function (friend_id) {
       await axios.delete("/api/v1/friend", {
-        data: { user_id: user.id, friend_id },
+        data: { friend_id },
       });
       store.dispatch("removeFriend", friend_id);
       let result = results.value.find((result) => result.id === friend_id);
@@ -110,11 +124,7 @@ export default {
     };
 
     const fetchRequests = async function () {
-      requests.value = (
-        await axios.get("/api/v1/friend/requests", {
-          params: { user_id: user.id },
-        })
-      ).data;
+      requests.value = (await axios.get("/api/v1/friend/requests")).data;
     };
 
     fetchRequests();

@@ -13,7 +13,14 @@
           placeholder="Search"
         />
         <div
-          class="overflow-y-scroll w-full divide-y divide-gray-500 bg-gray-70 rounded-md border border-gray-500"
+          class="
+            overflow-y-scroll
+            w-full
+            divide-y divide-gray-500
+            bg-gray-70
+            rounded-md
+            border border-gray-500
+          "
         >
           <div
             v-for="member in membersFiltered"
@@ -38,7 +45,14 @@
           placeholder="Search"
         />
         <div
-          class="overflow-y-scroll w-full divide-y divide-gray-500 bg-gray-70 rounded-md border border-gray-500"
+          class="
+            overflow-y-scroll
+            w-full
+            divide-y divide-gray-500
+            bg-gray-70
+            rounded-md
+            border border-gray-500
+          "
         >
           <div
             v-for="friend in friendsFiltered"
@@ -48,7 +62,9 @@
             <h2 class="text-xl">{{ friend.username }}</h2>
             <button class="button3" @click="add(friend.id)">Add</button>
           </div>
-          <div v-if="friendsFiltered.length === 0" class="text-center"> All your friends are already in the group </div>
+          <div v-if="friendsFiltered.length === 0" class="text-center">
+            All your friends are already in the group
+          </div>
         </div>
       </div>
       <div class="space-x-2">
@@ -91,8 +107,10 @@ export default {
       )
     );
     const friendsFiltered = computed(() =>
-      friends.value.filter((f) =>
-        f.username.toLowerCase().includes(friendsFilter.value) && !membersFiltered.value.find(m => m.id === f.id)
+      friends.value.filter(
+        (f) =>
+          f.username.toLowerCase().includes(friendsFilter.value) &&
+          !membersFiltered.value.find((m) => m.id === f.id)
       )
     );
 
@@ -118,8 +136,8 @@ export default {
     };
 
     const add = function (id) {
-      emit('add', id)
-    }
+      emit("add", id);
+    };
 
     const deleteGroup = async function () {
       await axios.delete("/api/v1/group", {

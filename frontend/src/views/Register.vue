@@ -48,7 +48,7 @@
 </template>
 
 <script>
-import Navbar from '../components/Navbar.vue'
+import Navbar from "../components/Navbar.vue";
 import axios from "axios";
 import { ref, computed } from "vue";
 import { useStore } from "vuex";
@@ -56,7 +56,7 @@ import { useRouter } from "vue-router";
 
 export default {
   components: {
-    Navbar
+    Navbar,
   },
   setup() {
     const store = useStore();

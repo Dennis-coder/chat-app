@@ -6,7 +6,7 @@ def MessageBean(params):
     return {
         "id": params[0],
         "text": params[1],
-        "timestamp": parse_timestamp(params[2]),
+        "sent_at": parse_timestamp(params[2]),
         "senderId": params[3],
         "recieverId": params[4]
     }
@@ -49,7 +49,7 @@ def get_all(user_id, friend_id):
 def new(text, sender_id, reciever_id):
     with DBHandler() as db:
         db.execute("""
-            INSERT INTO messages(text, timestamp, sender_id, reciever_id)
+            INSERT INTO messages(text, sent_at, sender_id, reciever_id)
             VALUES(%s, 'now', %s, %s)
             RETURNING id;
         """, [text, sender_id, reciever_id])

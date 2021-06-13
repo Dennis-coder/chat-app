@@ -9,13 +9,13 @@ def ReportBean(params):
         "status": params[4]
     }
 
-def get(id):
+def get(report_id):
     with DBHandler() as db:
         db.execute("""
             SELECT *
             FROM reports
             WHERE id = %s;
-        """, [id])
+        """, [report_id])
         report = db.one()
     return ReportBean(report)
 
@@ -39,21 +39,21 @@ def new(plaintiff_id, defendant, reason):
             return "No user with that name"
     return get(id)
 
-def update(id, status):
+def update_status(report_id, status):
     with DBHandler() as db:
         db.execute("""
             UPDATE reports
             SET status = %s
             WHERE id = %s;
-        """, [status, id])
+        """, [status, report_id])
     return "Report updated"
 
-def delete(id):
+def delete(report_id):
     with DBHandler() as db:
         db.execute("""
             DELETE FROM reports
             WHERE id = %s;
-        """)
+        """, [report_id])
     return "Report deleted"
 
 def get_all():

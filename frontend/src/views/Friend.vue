@@ -8,7 +8,16 @@
     />
     <div
       v-if="messages && !loadingMessages"
-      class="max-w-sm w-full px-2 space-y-2 overflow-y-scroll pt-2 pb-14 mt-auto"
+      class="
+        max-w-sm
+        w-full
+        px-2
+        space-y-2
+        overflow-y-scroll
+        pt-2
+        pb-14
+        mt-auto
+      "
       :style="{ 'max-height': messagesHeight + 'px' }"
       ref="messagesDiv"
     >
@@ -34,12 +43,26 @@
       <button
         :disabled="text.length === 0"
         @click.prevent="sendMessage"
-        class="absolute right-0 w-9 h-9 center-me focus:outline-none rounded-full mr-2 focus:bg-gray-400"
+        class="
+          absolute
+          right-0
+          w-9
+          h-9
+          center-me
+          focus:outline-none
+          rounded-full
+          mr-2
+          focus:bg-gray-400
+        "
       >
         <img src="../assets/send.png" class="h-5" />
       </button>
     </form>
-    <FriendSettingsModal v-if="showSettings" @close="toggleSettings" :friend="friend" />
+    <FriendSettingsModal
+      v-if="showSettings"
+      @close="toggleSettings"
+      :friend="friend"
+    />
   </div>
 </template>
 
@@ -89,13 +112,13 @@ export default {
       } else {
         friend.value = (
           await axios.get("/api/v1/friend", {
-            params: { friend_id: route.params.id, user_id: user.value.id },
+            params: { friend_id: route.params.id },
           })
         ).data;
       }
       messages.value = (
         await axios.get("/api/v1/friend/messages", {
-          params: { friend_id: route.params.id, user_id: user.value.id },
+          params: { friend_id: route.params.id },
         })
       ).data;
 
@@ -106,7 +129,6 @@ export default {
       let newMessage = (
         await axios.post("/api/v1/friend/message", {
           text: text.value,
-          sender_id: user.value.id,
           reciever_id: friend.value.id,
         })
       ).data;

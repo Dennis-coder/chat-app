@@ -77,7 +77,6 @@ export default {
   setup() {
     const store = useStore();
     const router = useRouter();
-    const user = store.state.user;
 
     const password = ref({
       new: "",
@@ -86,7 +85,6 @@ export default {
     const report = ref({
       reason: "",
       defendant: "",
-      plaintiff_id: user.id,
     });
     const showPassword = ref(false);
     const showReport = ref(false);
@@ -101,12 +99,10 @@ export default {
 
     const changePassword = async function () {
       if (password.value.new === password.value.confirm) {
-        await axios.put("/api/v1/user", {
-          user_id: user.id,
+        await axios.put("/api/v1/user/password", {
           password: password.value.new,
         });
       }
-      console.log(password.value);
     };
 
     const sendReport = async function () {
@@ -126,7 +122,7 @@ export default {
 
     const deleteAccount = async function () {
       if (confirm("Are you sure you want to delete your account?")) {
-        await axios.delete("/api/v1/user", { data: user.id });
+        await axios.delete("/api/v1/user");
         logout();
       }
     };

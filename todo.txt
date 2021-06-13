@@ -2,7 +2,7 @@ Backend
 -get reports
 -update reports
 -delete reports
--authorize users on requests
+-secure routes, friends and groups
 
 Frontend
 -responsiveness/css for tablets and desktops
@@ -13,6 +13,3 @@ Sockets
 -centralize socket logic in frontend
 -make actions depend on where you are in the site
 -sync friends when someone accepts your request
-
-Idk
--remove yourself from searchresults

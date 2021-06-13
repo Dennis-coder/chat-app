@@ -20,7 +20,7 @@ export default {
   },
   setup(props) {
     const showTimestamp = ref(false);
-    const timestamp = props.message.timestamp.substring(0, 5);
+    const timestamp = props.message.sent_at.substring(0, 5);
 
     const toggleTimestamp = function () {
       showTimestamp.value = !showTimestamp.value;

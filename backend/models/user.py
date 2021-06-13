@@ -1,5 +1,6 @@
 import jwt
 import bcrypt
+import datetime
 
 from models.db_handler import DBHandler
 from models.friend import RequestBean
@@ -56,20 +57,13 @@ def register(username, password):
         id = db.one()[0]
     return get(id)
 
-def update(user_id, password = None, role = None):
+def update_password(user_id, password = None):
     with DBHandler() as db:
-        if password:
-            db.execute("""
-                UPDATE users
-                SET pwd_hash = %s
-                WHERE id = %s;
-            """, [bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode(), user_id])
-        if role:
-            db.execute("""
-                UPDATE users
-                SET role = %s
-                WHERE id = %s;
-            """, [role, role])
+        db.execute("""
+            UPDATE users
+            SET pwd_hash = %s
+            WHERE id = %s;
+        """, [bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode(), user_id])
     return "User has been updated"
 
 def delete(user_id):
@@ -80,15 +74,16 @@ def delete(user_id):
         """, [user_id])
     return "User has been deleted"
 
-def search(term, user_id):
+def search(user_id, term):
     with DBHandler() as db:
         db.execute("""
             SELECT id, username, status, user_id AS sent_by
             FROM users 
             LEFT JOIN friendships
                 ON (user_id = id AND user2_id = %s) OR (user_id = %s AND user2_id = id)
-            WHERE username ILIKE %s;
-        """, [user_id, user_id, term])
+            WHERE username ILIKE %s
+            AND id != %s;
+        """, [user_id, user_id, term, user_id])
 
         perfect_match = db.one()
 
@@ -98,8 +93,9 @@ def search(term, user_id):
             LEFT JOIN friendships
                 ON (user_id = id AND user2_id = %s) OR (user_id = %s AND user2_id = id)
             WHERE username NOT ILIKE %s 
-            AND username ILIKE %s;
-        """, [user_id, user_id, term, f"{term}%"])
+            AND username ILIKE %s
+            AND id != %s;
+        """, [user_id, user_id, term, f"{term}%", user_id])
 
         prefix_matches = db.all()
 
@@ -110,8 +106,9 @@ def search(term, user_id):
                 ON (user_id = id AND user2_id = %s) OR (user_id = %s AND user2_id = id)
             WHERE username NOT ILIKE %s 
             AND username NOT ILIKE %s
-            AND username ILIKE %s;
-        """, [user_id, user_id, term, f"{term}%", f"%{term}%"])
+            AND username ILIKE %s
+            AND id != %s;
+        """, [user_id, user_id, term, f"{term}%", f"%{term}%", user_id])
 
         partial_matches = db.all()
     
@@ -123,4 +120,9 @@ def search(term, user_id):
 
 
 def token(user):
-    return jwt.encode(user, "secret", algorithm="HS256")
+    payload = {
+        **user,
+        "expires_at": str(datetime.datetime.utcnow() + datetime.timedelta(days=0, hours=0, minutes=5, seconds=0)),
+    }
+
+    return jwt.encode(payload, "secret", algorithm="HS256")

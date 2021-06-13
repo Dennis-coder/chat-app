@@ -39,7 +39,7 @@ import GroupchatModal from "./GroupchatModal.vue";
 export default {
   components: {
     SearchModal,
-    GroupchatModal
+    GroupchatModal,
   },
   setup() {
     const showSearchModal = ref(false);
@@ -57,7 +57,14 @@ export default {
       showGroupchatModal.value = !showGroupchatModal.value;
     };
 
-    return { isAdmin, user, showSearchModal, showGroupchatModal, toggleSearchModal, toggleGroupchatModal };
+    return {
+      isAdmin,
+      user,
+      showSearchModal,
+      showGroupchatModal,
+      toggleSearchModal,
+      toggleGroupchatModal,
+    };
   },
 };
 </script>

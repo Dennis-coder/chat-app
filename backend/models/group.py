@@ -41,21 +41,23 @@ def new(name, owner, users):
         add_member(group["id"], user)
     return group
 
-def update(group_id, name = None, owner = None):
+def update_name(group_id, name):
     with DBHandler() as db:
-        if name:
-            db.execute("""
-                UPDATE groups
-                SET name = %s
-                WHERE id = %s;
-            """, [name, group_id])
-        if owner:
-            db.execute("""
-                UPDATE groups
-                SET owner = %s
-                WHERE id = %s;
-            """, [owner, group_id])
-    return "Group has been updated"
+        db.execute("""
+            UPDATE groups
+            SET name = %s
+            WHERE id = %s;
+        """, [name, group_id])
+    return "Groupname has been updated"
+
+def update_owner(group_id, owner):
+    with DBHandler() as db:
+        db.execute("""
+            UPDATE groups
+            SET owner = %s
+            WHERE id = %s;
+        """, [owner, group_id])
+    return "Groupowner has been updated"
 
 def delete(group_id):
     with DBHandler() as db:

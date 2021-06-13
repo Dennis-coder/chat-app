@@ -94,12 +94,21 @@ export default {
     const height = ref(0);
     const searchTerm = ref("");
     const store = useStore();
-    const user = store.state.user;
     const tab = computed(() => store.state.tab);
     const friends = computed(() => store.state.friends);
     const groups = computed(() => store.state.groups);
 
-    const friendsSorted = computed(() => [...friends.value].sort((a,b) => a.lastInteraction.split(' ')[1] > b.lastInteraction.split(' ')[1] ? -1 : a.lastInteraction.split(' ')[1] < b.lastInteraction.split(' ')[1] ? 1 : a.lastInteraction.split(' ')[0] > b.lastInteraction.split(' ')[0] ? -1 : 1))
+    const friendsSorted = computed(() =>
+      [...friends.value].sort((a, b) =>
+        a.lastInteraction.split(" ")[1] > b.lastInteraction.split(" ")[1]
+          ? -1
+          : a.lastInteraction.split(" ")[1] < b.lastInteraction.split(" ")[1]
+          ? 1
+          : a.lastInteraction.split(" ")[0] > b.lastInteraction.split(" ")[0]
+          ? -1
+          : 1
+      )
+    );
 
     const friendsFiltered = computed(() =>
       friendsSorted.value.filter((friend) =>
@@ -107,7 +116,17 @@ export default {
       )
     );
 
-    const groupsSorted = computed(() => [...groups.value].sort((a,b) => a.lastInteraction.split(' ')[1] > b.lastInteraction.split(' ')[1] ? -1 : a.lastInteraction.split(' ')[1] < b.lastInteraction.split(' ')[1] ? 1 : a.lastInteraction.split(' ')[0] > b.lastInteraction.split(' ')[0] ? -1 : 1))
+    const groupsSorted = computed(() =>
+      [...groups.value].sort((a, b) =>
+        a.lastInteraction.split(" ")[1] > b.lastInteraction.split(" ")[1]
+          ? -1
+          : a.lastInteraction.split(" ")[1] < b.lastInteraction.split(" ")[1]
+          ? 1
+          : a.lastInteraction.split(" ")[0] > b.lastInteraction.split(" ")[0]
+          ? -1
+          : 1
+      )
+    );
 
     const groupsFiltered = computed(() =>
       groupsSorted.value.filter((group) =>
@@ -118,17 +137,9 @@ export default {
     const loadData = async function () {
       store.dispatch(
         "setFriends",
-        (
-          await axios.get("/api/v1/friend/all", {
-            params: { user_id: user.id },
-          })
-        ).data
+        (await axios.get("/api/v1/friend/all")).data
       );
-      store.dispatch(
-        "setGroups",
-        (await axios.get("/api/v1/group/all", { params: { user_id: user.id } }))
-          .data
-      );
+      store.dispatch("setGroups", (await axios.get("/api/v1/group/all")).data);
     };
 
     const resizeEvent = function () {

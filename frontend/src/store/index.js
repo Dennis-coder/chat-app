@@ -1,9 +1,12 @@
 import { io } from 'socket.io-client'
 import { createStore } from 'vuex'
 import jwt_decode from 'jwt-decode'
+import axios from 'axios'
 
 const token = localStorage.getItem('websnap.user')
 const user = token ? jwt_decode(token) : null
+
+axios.defaults.headers.common['Authorization'] = token ? "Bearer " + token : null
 
 const socketGen = function () {
   const socketURL = window.location.host.slice(0, -5) + ':3000'
@@ -57,6 +60,7 @@ export default createStore({
   actions: {
     setUser({ commit }, userToken) {
       localStorage.setItem('websnap.user', userToken)
+      axios.defaults.headers.common['Authorization'] = "Bearer " + userToken
       commit('setUser', jwt_decode(userToken))
       commit('setSocket', socketGen())
     },

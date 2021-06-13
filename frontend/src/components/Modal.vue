@@ -5,7 +5,7 @@
       :style="{ maxHeight: `${maxHeight}px` }"
     >
       <button class="absolute top-0 right-0 nav-link m-1" @click="close">
-        <img src="../assets/x.svg" class="nav-icon">
+        <img src="../assets/x.svg" class="nav-icon" />
       </button>
       <slot></slot>
     </div>
@@ -17,10 +17,10 @@
 </template>
 
 <script>
-import { ref, nextTick } from 'vue'
+import { ref, nextTick } from "vue";
 export default {
   props: {
-    height: Number
+    height: Number,
   },
   setup(props, { emit }) {
     const maxHeight = ref(0);

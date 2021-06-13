@@ -22,11 +22,10 @@ export default {
   setup(props) {
     const store = useStore();
     const router = useRouter();
-    const user = store.state.user;
 
     const remove = async function () {
       await axios.delete("/api/v1/friend", {
-        data: { user_id: user.id, friend_id: props.friend.id },
+        data: { friend_id: props.friend.id },
       });
       store.dispatch("removeFriend", props.friend.id);
       router.push("/home");

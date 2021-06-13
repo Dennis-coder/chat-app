@@ -1,7 +1,7 @@
 <template>
   <modal :height="0.5">
     <div class="flex flex-col items-center space-y-2 h-full">
-      <h2 class="text-2xl"> Create a group </h2>
+      <h2 class="text-2xl">Create a group</h2>
       <input
         class="input-field w-full rounded-md"
         type="text"
@@ -15,7 +15,14 @@
         placeholder="Search"
       />
       <div
-        class="overflow-y-scroll w-full divide-y divide-gray-500 bg-gray-70 rounded-md border border-gray-500"
+        class="
+          overflow-y-scroll
+          w-full
+          divide-y divide-gray-500
+          bg-gray-70
+          rounded-md
+          border border-gray-500
+        "
       >
         <div
           v-for="friend in friendsFiltered"
@@ -31,11 +38,7 @@
           <h2 class="text-xl">{{ friend.username }}</h2>
         </div>
       </div>
-      <button
-        @click="createGroup"
-        :disabled="disableButton"
-        class="button2"
-      >
+      <button @click="createGroup" :disabled="disableButton" class="button2">
         Create
       </button>
     </div>
@@ -84,7 +87,6 @@ export default {
         await axios.post("/api/v1/group", {
           name: name.value,
           users: selectedIds.value,
-          owner: user.id,
         })
       ).data;
       store.dispatch("addGroup", group);
