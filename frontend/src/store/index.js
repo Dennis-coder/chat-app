@@ -64,10 +64,13 @@ export default createStore({
       commit('setUser', jwt_decode(userToken))
       commit('setSocket', socketGen())
     },
-    removeUser({ commit }) {
+    logout({ commit }) {
       localStorage.removeItem('websnap.user')
+      axios.defaults.headers.common['Authorization'] = ""
       commit('setUser', null)
       commit('setSocket', null)
+      commit('setFriends', [])
+      commit('setGroups', [])
     },
     setFriends({ commit }, friends) {
       commit('setFriends', friends)

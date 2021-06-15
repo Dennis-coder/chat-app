@@ -116,7 +116,7 @@ export default {
     };
 
     const logout = function () {
-      store.dispatch("removeUser");
+      store.dispatch("logout");
       router.push("/");
     };
 
