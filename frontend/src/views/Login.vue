@@ -68,7 +68,7 @@ export default {
       if (response.status === "error") {
         error.value = response.error;
       } else {
-        store.dispatch("setUser", response.user);
+        store.dispatch("login", response.token);
         router.push("/home");
       }
     };

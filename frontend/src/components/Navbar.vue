@@ -1,27 +1,25 @@
 <template>
   <nav class="w-screen h-12">
     <div
-      class="w-screen h-full flex items-center justify-between px-8 bg-red-500"
+      class="w-screen h-full flex items-center px-4 bg-red-500"
+      :class="{ 'justify-between': !!user, 'justify-center': !user }"
     >
-      <div class="flex space-x-2">
-        <router-link v-if="user" to="/home" class="nav-link">
-          <img class="nav-icon" src="../assets/home.svg" alt="" />
-        </router-link>
-        <button v-if="user" @click="toggleSearchModal" class="nav-link">
-          <img class="nav-icon" src="../assets/search.svg" alt="" />
-        </button>
-      </div>
-
       <router-link to="/" class="">
         <img class="h-12" src="../assets/logo.svg" alt="" />
       </router-link>
 
-      <div class="flex space-x-2">
-        <button v-if="user" @click="toggleGroupchatModal" class="nav-link">
+      <div v-if="user" class="flex space-x-2">
+        <button @click="toggleSearchModal" class="nav-link">
+          <img class="nav-icon" src="../assets/search.svg" alt="" />
+        </button>
+        <button @click="toggleGroupchatModal" class="nav-link">
           <img class="nav-icon" src="../assets/chat.svg" alt="" />
         </button>
-        <router-link v-if="user" to="/settings" class="nav-link">
+        <router-link to="/settings" class="nav-link">
           <img class="nav-icon" src="../assets/settings.svg" alt="" />
+        </router-link>
+        <router-link v-if="user.role == 'admin'" to="/admin" class="nav-link">
+          <img class="nav-icon" src="../assets/admin.svg" alt="" />
         </router-link>
       </div>
     </div>

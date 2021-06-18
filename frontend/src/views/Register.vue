@@ -10,6 +10,7 @@
         class="input-field"
         type="text"
         placeholder="Username"
+        maxlength="25"
         v-model="username"
       />
       <input

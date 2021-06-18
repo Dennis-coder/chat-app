@@ -1,7 +1,7 @@
 <template>
   <div class="center-me flex-col h-full">
     <NavbarLite :text="'Settings'" :settings="false" @back="back" />
-    <div class="center-me flex-col pt-4">
+    <div class="center-me flex-col mt-4">
       <button @click="togglePassword" class="form-button">
         Change password
         <img

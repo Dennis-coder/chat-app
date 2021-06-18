@@ -58,7 +58,7 @@ export default createStore({
     },
   },
   actions: {
-    setUser({ commit }, userToken) {
+    login({ commit }, userToken) {
       localStorage.setItem('websnap.user', userToken)
       axios.defaults.headers.common['Authorization'] = "Bearer " + userToken
       commit('setUser', jwt_decode(userToken))

@@ -6,6 +6,7 @@ import Home from '../views/Home.vue'
 import Settings from '../views/Settings.vue'
 import Friend from '../views/Friend.vue'
 import Group from '../views/Group.vue'
+import Admin from '../views/Admin.vue'
 import jwt_decode from "jwt-decode"
 
 const routes = [
@@ -63,6 +64,14 @@ const routes = [
     component: Settings,
     meta: {
       allowedRoles: ['user', 'admin']
+    }
+  },
+  {
+    path: '/admin',
+    name: 'Admin',
+    component: Admin,
+    meta: {
+      allowedRoles: ['admin']
     }
   },
 ]
