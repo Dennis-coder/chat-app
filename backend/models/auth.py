@@ -14,18 +14,18 @@ class Auth:
                 [schema, token] = auth_header.split(' ')
 
                 if schema != "Bearer":
-                    abort(401, description="Wrong authorization schema")
+                    abort(401, "Wrong authorization schema")
 
                 try:
                     user = jwt.decode(token, "secret", algorithms="HS256")
                     g.auth_user = user
                 except jwt.ExpiredSignatureError:
-                    abort(401, description='Signature expired. Please log in again.')
+                    abort(401, 'Signature expired. Please log in again.')
                 except jwt.InvalidTokenError:
-                    abort(401, description='Invalid token. Please log in again.')
+                    abort(401, 'Invalid token. Please log in again.')
 
                 if roles and user["role"] not in roles:
-                    abort(403, description="Unauthorized Access")
+                    abort(403, "Unauthorized Access")
 
                 return func(*args, **kwargs)
             return wrapper
@@ -37,7 +37,7 @@ class Auth:
             group_id = request.json["group_id"] if request.json else request.args["group_id"]
             group = Group.get(group_id)
             if group["owner"] != self.user_id() and self.user_role() != 'admin':
-                abort(403, description="Only the group owner can access this resource")
+                abort(403, "Only the group owner can access this resource")
             return func(*args, **kwargs)
         return wrapper
 
@@ -47,7 +47,7 @@ class Auth:
             group_id = request.json["group_id"] if request.json else request.args["group_id"]
             is_member = Group.is_member(group_id, self.user_id())
             if not is_member and self.user_role() != 'admin':
-                abort(403, description="Only group members can access this resource")
+                abort(403, "Only group members can access this resource")
             return func(*args, **kwargs)
         return wrapper
 

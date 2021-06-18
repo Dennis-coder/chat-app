@@ -3,15 +3,22 @@ import { createStore } from 'vuex'
 import jwt_decode from 'jwt-decode'
 import axios from 'axios'
 
-const token = localStorage.getItem('websnap.user')
-const user = token ? jwt_decode(token) : null
-
-axios.defaults.headers.common['Authorization'] = token ? "Bearer " + token : null
+const loggedIn = function () {
+  let user = jwt_decode(localStorage.getItem('websnap.user'))
+  if (!user) {
+    return null
+  }
+  return user.exp * 1000 > Date.now() ? user : null
+}
 
 const socketGen = function () {
   const socketURL = window.location.host.slice(0, -5) + ':3000'
   return io(socketURL, { auth: { token: localStorage.getItem('websnap.user') } })
 }
+
+const user = loggedIn()
+
+axios.defaults.headers.common['Authorization'] = user ? "Bearer " + localStorage.getItem('websnap.user') : null
 
 const socket = user ? socketGen() : null
 

@@ -102,7 +102,11 @@ router.beforeEach((to, from, next) => {
 });
 
 const loggedIn = function() {
-  return !!localStorage.getItem('websnap.user');
+  let user = jwt_decode(localStorage.getItem('websnap.user'))
+  if (!user) {
+    return false
+  }
+  return user.exp * 1000 > Date.now()
 }
 
 export default router
