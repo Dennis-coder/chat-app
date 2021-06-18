@@ -23,6 +23,7 @@ def get(group_id):
         group = db.one()
     return GroupBean(group)
 
+
 def create(name, owner):
     with DBHandler() as db:
         db.execute("""
@@ -34,12 +35,14 @@ def create(name, owner):
         id = db.one()[0]
     return get(id)
 
+
 def new(name, owner, users):
     group = create(name, owner)
     add_member(group["id"], owner)
     for user in users:
         add_member(group["id"], user)
     return group
+
 
 def update_name(group_id, name):
     with DBHandler() as db:
@@ -50,6 +53,7 @@ def update_name(group_id, name):
         """, [name, group_id])
     return "Groupname has been updated"
 
+
 def update_owner(group_id, owner):
     with DBHandler() as db:
         db.execute("""
@@ -59,6 +63,7 @@ def update_owner(group_id, owner):
         """, [owner, group_id])
     return "Groupowner has been updated"
 
+
 def delete(group_id):
     with DBHandler() as db:
         db.execute("""
@@ -67,6 +72,7 @@ def delete(group_id):
         """, [group_id])
 
     return "Group has been deleted"
+
 
 def get_all(user_id):
     with DBHandler() as db:
@@ -83,8 +89,9 @@ def get_all(user_id):
     if from_db:
         for group in from_db:
             groups.append(GroupBean(group))
-    
+
     return groups
+
 
 def get_members(group_id):
     with DBHandler() as db:
@@ -100,8 +107,9 @@ def get_members(group_id):
     members = []
     for member in from_db:
         members.append(UserBean(member))
-    
+
     return members
+
 
 def add_member(group_id, user_id):
     with DBHandler() as db:
@@ -110,6 +118,21 @@ def add_member(group_id, user_id):
             VALUES(%s, %s, 'now');
         """, [group_id, user_id])
     return get_user(user_id)
+
+
+def is_member(group_id, user_id):
+    with DBHandler() as db:
+        db.execute("""
+            SELECT id, username, role
+            FROM group_memberships
+            LEFT JOIN users
+                ON user_id = id
+            WHERE group_id = %s
+			AND user_id = %s;
+        """, [group_id, user_id])
+        user = db.one()
+    return not not user
+
 
 def remove_member(group_id, user_id):
     with Transaction() as db:
@@ -131,6 +154,7 @@ def remove_member(group_id, user_id):
                 WHERE id = %s;
             """, [id, group_id])
     return "User removed from group"
+
 
 def update_last_interaction(group_id):
     with DBHandler() as db:

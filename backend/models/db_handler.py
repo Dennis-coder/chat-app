@@ -38,7 +38,7 @@ class DBHandler:
         query += ";"
         try:
             self.cur.execute(query, values)
-        except:
+        except Exception as err:
             if tries == 0:
                 raise Exception("Database connection could not be established")
             time.sleep(0.5 * (5 / tries))

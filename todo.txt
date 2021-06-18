@@ -1,8 +1,6 @@
 Backend
--get reports
 -update reports
 -delete reports
--secure routes, friends and groups
 
 Frontend
 -responsiveness/css for tablets and desktops

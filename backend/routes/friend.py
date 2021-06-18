@@ -3,10 +3,11 @@ from app import app, auth
 import models.friend as Friend
 import models.message as Message
 
+
 @app.get("/api/v1/friend")
 @auth.login(roles=['user', 'admin'])
 def get_friend():
-    user_id = auth.get_user()['id']
+    user_id = auth.user_id()
     friend_id = request.args["friend_id"]
     friend = Friend.get(user_id, friend_id)
     return friend
@@ -15,7 +16,7 @@ def get_friend():
 @app.post("/api/v1/friend")
 @auth.login(roles=['user', 'admin'])
 def post_friend():
-    user_id = auth.get_user()['id']
+    user_id = auth.user_id()
     friend_id = request.json["friend_id"]
     result = Friend.add(user_id, friend_id)
     return result
@@ -24,7 +25,7 @@ def post_friend():
 @app.put("/api/v1/friend")
 @auth.login(roles=['user', 'admin'])
 def put_friend():
-    user_id = auth.get_user()['id']
+    user_id = auth.user_id()
     friend_id = request.json["friend_id"]
     result = Friend.accept(user_id, friend_id)
     return result
@@ -33,7 +34,7 @@ def put_friend():
 @app.delete("/api/v1/friend")
 @auth.login(roles=['user', 'admin'])
 def delete_friend():
-    user_id = auth.get_user()['id']
+    user_id = auth.user_id()
     friend_id = request.json["friend_id"]
     result = Friend.remove(user_id, friend_id)
     return result
@@ -42,7 +43,7 @@ def delete_friend():
 @app.get("/api/v1/friend/all")
 @auth.login(roles=['user', 'admin'])
 def all_friends():
-    user_id = auth.get_user()['id']
+    user_id = auth.user_id()
     friends = Friend.get_all(user_id)
     return jsonify(friends)
 
@@ -51,7 +52,7 @@ def all_friends():
 @auth.login(roles=['user', 'admin'])
 def message():
     text = request.json["text"]
-    sender_id = auth.get_user()['id']
+    sender_id = auth.user_id()
     reciever_id = request.json["reciever_id"]
     message = Message.new(text, sender_id, reciever_id)
     return message
@@ -60,7 +61,7 @@ def message():
 @app.get("/api/v1/friend/messages")
 @auth.login(roles=['user', 'admin'])
 def all_messages():
-    user_id = auth.get_user()['id']
+    user_id = auth.user_id()
     friend_id = request.args["friend_id"]
     messages = Message.get_all(user_id, friend_id)
     return jsonify(messages)
@@ -69,6 +70,6 @@ def all_messages():
 @app.get("/api/v1/friend/requests")
 @auth.login(roles=['user', 'admin'])
 def all_requests():
-    user_id = auth.get_user()['id']
+    user_id = auth.user_id()
     requests = Friend.requests(user_id)
     return jsonify(requests)

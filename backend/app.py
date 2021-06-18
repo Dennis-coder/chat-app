@@ -17,11 +17,6 @@ def unauthorized(e):
     return jsonify(error=str(e)), 403
 
 
-@app.get("/api/test")
-@auth.login(roles=["user", "admin"])
-def test():
-    return auth.get_user() if auth.get_user() else "Hello"
-
 import routes.user
 import routes.friend
 import routes.group

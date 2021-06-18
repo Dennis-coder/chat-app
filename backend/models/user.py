@@ -122,7 +122,7 @@ def search(user_id, term):
 def token(user):
     payload = {
         **user,
-        "expires_at": str(datetime.datetime.utcnow() + datetime.timedelta(days=0, hours=0, minutes=5, seconds=0)),
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(days=1, hours=0, minutes=0, seconds=0),
     }
 
     return jwt.encode(payload, "secret", algorithm="HS256")

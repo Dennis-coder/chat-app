@@ -2,10 +2,18 @@ from flask import request, jsonify
 from app import app, auth
 import models.report as Report
 
+
+@app.get("/api/v1/report/all")
+@auth.login(roles=['admin'])
+def get_all_reports():
+    reports = Report.get_all()
+    return jsonify(reports)
+
+
 @app.post("/api/v1/report")
 @auth.login(roles=['user', 'admin'])
 def post_report():
-    plaintiff_id = auth.get_user()['id']
+    plaintiff_id = auth.user_id()
     defendant = request.json["defendant"]
     reason = request.json["reason"]
     report = Report.new(plaintiff_id, defendant, reason)

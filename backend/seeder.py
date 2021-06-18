@@ -149,8 +149,9 @@ def populate_tables(db):
         """, [user_id, user2_id, status])
 
     groups = [
-        {"name": "test group 1", "owner": 4},
+        {"name": "test group 1", "owner": 1},
         {"name": "test group 2", "owner": 4},
+        {"name": "test group 3", "owner": 1},
     ]
 
     for group in groups:
@@ -167,6 +168,9 @@ def populate_tables(db):
         {"group_id": 1, "user_id": 3},
         {"group_id": 2, "user_id": 2},
         {"group_id": 2, "user_id": 4},
+        {"group_id": 3, "user_id": 1},
+        {"group_id": 3, "user_id": 2},
+        {"group_id": 3, "user_id": 3},
     ]
 
     for membership in group_memberships:

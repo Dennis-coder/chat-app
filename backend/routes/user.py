@@ -16,14 +16,13 @@ def login():
     else:
         response = {
             "status": "ok",
-            "user": User.token(user)
+            "token": User.token(user)
         }
 
     return jsonify(response)
 
 
 @app.post("/api/v1/user")
-@auth.login
 def register():
     username = request.json["username"]
     password = request.json["password"]
@@ -46,16 +45,23 @@ def register():
 @app.put("/api/v1/user/password")
 @auth.login(roles=['user', 'admin'])
 def update_user():
-    user_id = auth.get_user()['id']
+    user_id = auth.user_id()
     pwd = request.json["password"]
     response = User.update_password(user_id, pwd)
     return response
 
 
-@app.delete("/api/v1/user")
+@app.delete("/api/v1/user/self")
 @auth.login(roles=['user', 'admin'])
 def delete_user():
-    user_id = auth.get_user()['id']
+    user_id = auth.user_id()
+    response = User.delete(user_id)
+    return response
+
+@app.delete("/api/v1/user")
+@auth.login(roles=['admin'])
+def delete_user_admin():
+    user_id = request.json['user_id']
     response = User.delete(user_id)
     return response
 
@@ -63,7 +69,7 @@ def delete_user():
 @app.get("/api/v1/user/find")
 @auth.login(roles=['user', 'admin'])
 def find():
-    user_id = auth.get_user()['id']
+    user_id = auth.user_id()
     term = request.args["term"]
     result = User.search(user_id, term)
     return jsonify(result)

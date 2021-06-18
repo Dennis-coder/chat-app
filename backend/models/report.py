@@ -1,13 +1,18 @@
 from models.db_handler import DBHandler
+from models.user import UserBean, get as get_user
+from models.helpers import parse_timestamp
+
 
 def ReportBean(params):
     return {
         "id": params[0],
-        "plaintiffId": params[1],
-        "defendantId": params[2],
+        "plaintiff": get_user(params[1]),
+        "defendant": get_user(params[2]),
         "reason": params[3],
-        "status": params[4]
+        "status": params[4],
+        "created_at": parse_timestamp(params[5])
     }
+
 
 def get(report_id):
     with DBHandler() as db:
@@ -18,6 +23,7 @@ def get(report_id):
         """, [report_id])
         report = db.one()
     return ReportBean(report)
+
 
 def new(plaintiff_id, defendant, reason):
     with DBHandler() as db:
@@ -39,6 +45,7 @@ def new(plaintiff_id, defendant, reason):
             return "No user with that name"
     return get(id)
 
+
 def update_status(report_id, status):
     with DBHandler() as db:
         db.execute("""
@@ -48,6 +55,7 @@ def update_status(report_id, status):
         """, [status, report_id])
     return "Report updated"
 
+
 def delete(report_id):
     with DBHandler() as db:
         db.execute("""
@@ -55,6 +63,7 @@ def delete(report_id):
             WHERE id = %s;
         """, [report_id])
     return "Report deleted"
+
 
 def get_all():
     with DBHandler() as db:
