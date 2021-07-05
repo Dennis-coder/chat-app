@@ -116,7 +116,7 @@ export default {
     );
     const membersFiltered = computed(() =>
       props.members.filter((m) =>
-        !!m
+        m.username.toLowerCase().includes(membersFilter.value)
       )
     );
     const friendsFiltered = computed(() =>
