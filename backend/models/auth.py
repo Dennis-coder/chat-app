@@ -2,6 +2,7 @@ from flask import request, abort, g
 from functools import wraps
 import models.group as Group
 import jwt
+from decouple import config
 
 
 class Auth:
@@ -17,7 +18,7 @@ class Auth:
                     abort(401, "Wrong authorization schema")
 
                 try:
-                    user = jwt.decode(token, "secret", algorithms="HS256")
+                    user = jwt.decode(token, config('JWT_TOKEN_SECRET'), algorithms="HS256")
                     g.auth_user = user
                 except jwt.ExpiredSignatureError:
                     abort(401, 'Signature expired. Please log in again.')

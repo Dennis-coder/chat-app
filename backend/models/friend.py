@@ -1,5 +1,6 @@
 from models.db_handler import DBHandler
 from models.helpers import parse_timestamp
+from models.message import get_all as get_all_messages
 
 
 def FriendBean(params):
@@ -10,38 +11,6 @@ def FriendBean(params):
         "friendsSince": parse_timestamp(params[3])
     }
 
-def RequestBean(params):
-    return {
-        "id": params[0],
-        "username": params[1],
-        "status": params[2],
-        "sentBy": params[3]
-    }
-
-
-def get_all(user_id):
-    with DBHandler() as db:
-        db.execute("""
-            SELECT user_id AS id, username, last_interaction, friends_since
-            FROM friendships
-            LEFT JOIN users
-                ON user_id = id
-            WHERE user2_id = %s AND status = 0
-            UNION
-            SELECT user2_id AS id, username, last_interaction, friends_since
-            FROM friendships
-            LEFT JOIN users
-                ON user2_id = id
-            WHERE user_id = %s AND status = 0;
-        """, [user_id, user_id])
-
-        from_db = db.all()
-    friends = []
-    if from_db:
-        for row in from_db:
-            friends.append(FriendBean(row))
-    
-    return friends
 
 def get(user_id, friend_id):
     with DBHandler() as db:
@@ -61,25 +30,34 @@ def get(user_id, friend_id):
         friend = db.one()
     return FriendBean(friend)
 
+def get_with_messages(user_id, friend_id):
+    with DBHandler() as db:
+        db.execute("""
+            SELECT user_id AS id, username, last_interaction, friends_since
+            FROM friendships
+            LEFT JOIN users
+                ON user_id = id
+            WHERE user2_id = %s AND user_id = %s
+            UNION
+            SELECT user2_id AS id, username, last_interaction, friends_since
+            FROM friendships
+            LEFT JOIN users
+                ON user2_id = id
+            WHERE user_id = %s AND user2_id = %s;
+        """, [user_id, friend_id, user_id, friend_id])
+        friend_row = db.one()
+    friend = FriendBean(friend_row)
+    friend['messages'] = get_all_messages(user_id, friend_id)
+    return friend
+
 def add(user_id, friend_id):
     with DBHandler() as db:
         db.execute("""
-            INSERT INTO friendships (user_id, user2_id, status, last_interaction, friends_since)
-            VALUES(%s, %s, 1, 'now', 'now');
+            INSERT INTO friendships (user_id, user2_id, last_interaction, friends_since)
+            VALUES(%s, %s, 'now', 'now');
         """, [user_id, friend_id])
 
-        return "Sent friendsrequest"
-
-def accept(user_id, friend_id):
-    with DBHandler() as db:
-        db.execute("""
-            UPDATE friendships
-            SET status = 0
-            WHERE (user_id, user2_id) = (%s, %s) OR (user_id, user2_id) = (%s, %s);
-        """, [user_id, friend_id, friend_id, user_id])
-
-    update_last_interaction(user_id, friend_id)
-    return get(user_id, friend_id)
+    return "Friend added"
 
 def remove(user_id, friend_id):
     with DBHandler() as db:
@@ -90,22 +68,55 @@ def remove(user_id, friend_id):
 
         return "Friend has been removed"
 
-def requests(user_id):
+def get_all(user_id):
     with DBHandler() as db:
         db.execute("""
-            SELECT id, username, status, user_id AS sent_by
-            FROM users
-            LEFT JOIN friendships
-                ON (user_id = id AND user2_id = %s) OR (user_id = %s AND user2_id = id)
-            WHERE status = 1;
+            SELECT user_id AS id, username, last_interaction, friends_since
+            FROM friendships
+            LEFT JOIN users
+                ON user_id = id
+            WHERE user2_id = %s
+            UNION
+            SELECT user2_id AS id, username, last_interaction, friends_since
+            FROM friendships
+            LEFT JOIN users
+                ON user2_id = id
+            WHERE user_id = %s;
         """, [user_id, user_id])
 
         from_db = db.all()
-    requests = []
+    friends = []
     if from_db:
-        for row in from_db:
-            requests.append(RequestBean(row))
-    return requests
+        for friend_row in from_db:
+            friends.append(FriendBean(friend_row))
+    
+    return friends
+
+def get_all_with_messages(user_id):
+    with DBHandler() as db:
+        db.execute("""
+            SELECT user_id AS id, username, last_interaction, friends_since
+            FROM friendships
+            LEFT JOIN users
+                ON user_id = id
+            WHERE user2_id = %s
+            UNION
+            SELECT user2_id AS id, username, last_interaction, friends_since
+            FROM friendships
+            LEFT JOIN users
+                ON user2_id = id
+            WHERE user_id = %s;
+        """, [user_id, user_id])
+
+        from_db = db.all()
+    friends = []
+    if from_db:
+        for friend_row in from_db:
+            friend = FriendBean(friend_row)
+            friend['messages'] = get_all_messages(user_id, friend['id'])
+            friends.append(friend)
+    
+    return friends
 
 def update_last_interaction(user_id, friend_id):
     with DBHandler() as db:

@@ -102,6 +102,8 @@ export default {
         await axios.put("/api/v1/user/password", {
           password: password.value.new,
         });
+        password.value.new = "";
+        password.value.confirm = "";
       }
     };
 

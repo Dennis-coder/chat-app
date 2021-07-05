@@ -8,60 +8,81 @@
         <img class="h-12" src="../assets/logo.svg" alt="" />
       </router-link>
 
-      <div v-if="user" class="flex space-x-2">
-        <button @click="toggleSearchModal" class="nav-link">
+      <div v-if="loggedIn" class="flex space-x-2">
+        <button @click="toggleSearchModal" class="nav-link relative">
           <img class="nav-icon" src="../assets/search.svg" alt="" />
+          <div
+            v-if="pendingRequests"
+            class="
+              absolute
+              -top-0
+              -right-0
+              bg-gray-200
+              w-3
+              h-3
+              rounded-full
+              center-me
+            "
+          ></div>
         </button>
         <button @click="toggleGroupchatModal" class="nav-link">
           <img class="nav-icon" src="../assets/chat.svg" alt="" />
         </button>
-        <router-link to="/settings" class="nav-link">
+        <button @click="toggleSettings" class="nav-link">
           <img class="nav-icon" src="../assets/settings.svg" alt="" />
-        </router-link>
-        <router-link v-if="user.role == 'admin'" to="/admin" class="nav-link">
+        </button>
+        <button
+          v-if="user.role == 'admin'"
+          @click="toggleAdmin"
+          class="nav-link"
+        >
           <img class="nav-icon" src="../assets/admin.svg" alt="" />
-        </router-link>
+        </button>
       </div>
     </div>
-
-    <SearchModal v-if="showSearchModal" @close="toggleSearchModal" />
-    <GroupchatModal v-if="showGroupchatModal" @close="toggleGroupchatModal" />
   </nav>
 </template>
 
 <script>
-import { ref, computed } from "vue";
+import { computed } from "vue";
 import { useStore } from "vuex";
-import SearchModal from "./SearchModal.vue";
-import GroupchatModal from "./GroupchatModal.vue";
 export default {
-  components: {
-    SearchModal,
-    GroupchatModal,
-  },
-  setup() {
-    const showSearchModal = ref(false);
-    const showGroupchatModal = ref(false);
-
+  setup(_, { emit }) {
     const store = useStore();
     const user = computed(() => store.state.user);
-    const isAdmin = user.value ? user.value.role == "admin" : false;
+    const loggedIn = computed(() =>
+      user.value ? user.value.exp * 1000 > Date.now() : false
+    );
+    const isAdmin = user.value != null ? user.value.role == "admin" : false;
+    const pendingRequests = computed(
+      () => store.state.requestsModule.requests.length > 0
+    );
 
     const toggleSearchModal = function () {
-      showSearchModal.value = !showSearchModal.value;
+      emit("toggleSearchModal");
     };
 
     const toggleGroupchatModal = function () {
-      showGroupchatModal.value = !showGroupchatModal.value;
+      emit("toggleGroupchatModal");
+    };
+
+    const toggleSettings = function () {
+      emit("toggleSettings");
+    };
+
+    const toggleAdmin = function () {
+      emit("toggleAdmin");
     };
 
     return {
       isAdmin,
       user,
-      showSearchModal,
-      showGroupchatModal,
       toggleSearchModal,
       toggleGroupchatModal,
+      toggleSettings,
+      toggleAdmin,
+      loggedIn,
+      pendingRequests,
     };
   },
 };

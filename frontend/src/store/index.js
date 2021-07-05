@@ -1,106 +1,79 @@
-import { io } from 'socket.io-client'
 import { createStore } from 'vuex'
-import jwt_decode from 'jwt-decode'
 import axios from 'axios'
-
-const loggedIn = function () {
-  let user = jwt_decode(localStorage.getItem('websnap.user'))
-  if (!user) {
-    return null
-  }
-  return user.exp * 1000 > Date.now() ? user : null
-}
-
-const socketGen = function () {
-  const socketURL = window.location.host.slice(0, -5) + ':3000'
-  return io(socketURL, { auth: { token: localStorage.getItem('websnap.user') } })
-}
-
-const user = loggedIn()
-
-axios.defaults.headers.common['Authorization'] = user ? "Bearer " + localStorage.getItem('websnap.user') : null
-
-const socket = user ? socketGen() : null
+import jwt_decode from 'jwt-decode'
+import { socketGen, setup } from '../sockets/index.js'
+import groupsModule from './modules/groups.js'
+import friendsModule from './modules/friends.js'
+import requestsModule from './modules/requests.js'
 
 export default createStore({
-  state: {
-    user,
-    friends: [],
-    groups: [],
-    socket,
-    tab: 0
-  },
-  mutations: {
-    setUser(state, newUser) {
-      state.user = newUser
-    },
-    setFriends(state, friends) {
-      state.friends = friends
-    },
-    addFriend(state, friend) {
-      state.friends.push(friend)
-    },
-    removeFriend(state, friendId) {
-      let index = state.friends.findIndex(f => f.id = friendId)
-      state.friends.splice(index, 1)
-    },
-    setGroups(state, groups) {
-      state.groups = groups
-    },
-    addGroup(state, group) {
-      state.groups.push(group)
-    },
-    removeGroup(state, groupId) {
-      let index = state.groups.findIndex(g => g.id = groupId)
-      state.groups.splice(index, 1)
-    },
-    setSocket(state, socket) {
-      if (state.socket) {
-        state.socket.disconnect()
-      }
-      state.socket = socket
-    },
-    setTab(state, tab) {
-      state.tab = tab
-    },
-  },
-  actions: {
-    login({ commit }, userToken) {
-      localStorage.setItem('websnap.user', userToken)
-      axios.defaults.headers.common['Authorization'] = "Bearer " + userToken
-      commit('setUser', jwt_decode(userToken))
-      commit('setSocket', socketGen())
-    },
-    logout({ commit }) {
-      localStorage.removeItem('websnap.user')
-      axios.defaults.headers.common['Authorization'] = ""
-      commit('setUser', null)
-      commit('setSocket', null)
-      commit('setFriends', [])
-      commit('setGroups', [])
-    },
-    setFriends({ commit }, friends) {
-      commit('setFriends', friends)
-    },
-    addFriend({ commit }, friend) {
-      commit('addFriend', friend)
-    },
-    removeFriend({ commit }, friendId) {
-      commit('removeFriend', friendId)
-    },
-    setGroups({ commit }, groups) {
-      commit('setGroups', groups)
-    },
-    addGroup({ commit }, group) {
-      commit('addGroup', group)
-    },
-    removeGroup({ commit }, groupId) {
-      commit('removeGroup', groupId)
-    },
-    setTab({ commit }, tab) {
-      commit('setTab', tab)
-    },
-  },
-  modules: {
-  }
+	state: {
+		user: null,
+		socket: null,
+		tab: 0,
+	},
+	mutations: {
+		setUser(state, newUser) {
+			state.user = newUser
+		},
+
+		setSocket(state, socket) {
+			if (state.socket) {
+				state.socket.disconnect()
+			}
+			state.socket = socket
+		},
+		socketSetup(state) {
+			setup(state.socket)
+		},
+		setTab(state, tab) {
+			state.tab = tab
+		},
+	},
+	actions: {
+		login({ commit, dispatch }, userToken) {
+			localStorage.setItem('websnap.user', userToken)
+			axios.defaults.headers.common['Authorization'] = "Bearer " + userToken
+			commit('setUser', jwt_decode(userToken))
+			let socket = socketGen()
+			commit('setSocket', socket)
+			loadData(dispatch, socket)
+			commit('socketSetup')
+		},
+		logout({ commit }) {
+			localStorage.removeItem('websnap.user')
+			axios.defaults.headers.common['Authorization'] = ""
+			commit('setUser', null)
+			commit('setSocket', null)
+			commit('setFriends', [])
+			commit('setGroups', [])
+		},
+
+		setTab({ commit }, tab) {
+			commit('setTab', tab)
+		},
+	},
+	modules: {
+		groupsModule,
+		friendsModule,
+		requestsModule
+	}
 })
+
+const loadData = async function (dispatch, socket) {
+	let friends = (await axios.get("/api/v1/friends", { params: { includeMessages: true } })).data
+	dispatch("setFriends", friends);
+
+	let groups = (await axios.get("/api/v1/groups", { params: { includeMessages: true } })).data
+	dispatch("setGroups", groups);
+
+	groups.forEach((g) => {
+		socket.emit('joinGroup', g.id)
+	})
+
+	let requests = (await axios.get("/api/v1/friend/requests")).data
+	dispatch("setRequests", requests)
+	
+	let pendingRequests = (await axios.get("/api/v1/friend/requests/pending")).data
+	dispatch("setPendingRequests", pendingRequests)
+};

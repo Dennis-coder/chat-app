@@ -1,13 +1,10 @@
 Backend
 -update reports
--delete reports
 
 Frontend
 -responsiveness/css for tablets and desktops
 -admin view
 
 Sockets
--notify when recieving new messages
--centralize socket logic in frontend
+-notifications
 -make actions depend on where you are in the site
--sync friends when someone accepts your request

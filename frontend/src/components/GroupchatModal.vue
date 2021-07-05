@@ -54,12 +54,13 @@ export default {
   components: {
     modal: Modal,
   },
-  setup() {
+  setup(_, { emit }) {
     const store = useStore();
-    const user = store.state.user;
-    const friends = store.state.friends;
-    const selectedIds = ref([]);
 
+    const user = store.state.user;
+    const friends = computed(() => store.state.friendsModule.friends);
+    const socket = store.state.socket;
+    const selectedIds = ref([]);
     const name = ref("");
     const filter = ref("");
 
@@ -68,7 +69,7 @@ export default {
     );
 
     const friendsFiltered = computed(() =>
-      friends.filter((friend) =>
+      friends.value.filter((friend) =>
         friend.username.toLowerCase().includes(filter.value)
       )
     );
@@ -83,14 +84,19 @@ export default {
     };
 
     const createGroup = async function () {
-      let group = (
-        await axios.post("/api/v1/group", {
-          name: name.value,
-          users: selectedIds.value,
-        })
-      ).data;
-      store.dispatch("addGroup", group);
-      close();
+      try {
+        let group = (
+          await axios.post("/api/v1/group", {
+            name: name.value,
+            users: selectedIds.value,
+          })
+        ).data;
+        socket.emit("newGroup", group);
+        store.dispatch("addGroup", group);
+        emit("close");
+      } catch (error) {
+        console.error(error);
+      }
     };
 
     return {

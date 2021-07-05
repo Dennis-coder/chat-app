@@ -1,9 +1,10 @@
 import jwt
 import bcrypt
 import datetime
+from decouple import config
 
 from models.db_handler import DBHandler
-from models.friend import RequestBean
+from models.friend_request import RequestBean
 
 
 def UserBean(params):
@@ -11,6 +12,12 @@ def UserBean(params):
         "id": params[0],
         "username": params[1],
         "role": params[2]
+    }
+
+def SearchResultBean(params):
+    return {
+        "id": params[0],
+        "username": params[1]
     }
 
 
@@ -23,6 +30,7 @@ def get(id):
         """, [id])
         user = db.one()
     return UserBean(user)
+
 
 def login(username, password):
     with DBHandler() as db:
@@ -37,6 +45,7 @@ def login(username, password):
     else:
         return "Incorrect credentials"
 
+
 def register(username, password):
     with DBHandler() as db:
         db.execute("""
@@ -47,7 +56,7 @@ def register(username, password):
 
         if db.one():
             return "Username has already been taken"
-        
+
         db.execute("""
             INSERT INTO users(username, pwd_hash, role, created_at)
             VALUES(%s, %s, %s, 'now')
@@ -57,7 +66,8 @@ def register(username, password):
         id = db.one()[0]
     return get(id)
 
-def update_password(user_id, password = None):
+
+def update_password(user_id, password=None):
     with DBHandler() as db:
         db.execute("""
             UPDATE users
@@ -65,6 +75,7 @@ def update_password(user_id, password = None):
             WHERE id = %s;
         """, [bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode(), user_id])
     return "User has been updated"
+
 
 def delete(user_id):
     with DBHandler() as db:
@@ -74,47 +85,42 @@ def delete(user_id):
         """, [user_id])
     return "User has been deleted"
 
+
 def search(user_id, term):
     with DBHandler() as db:
         db.execute("""
-            SELECT id, username, status, user_id AS sent_by
+            SELECT id, username
             FROM users 
-            LEFT JOIN friendships
-                ON (user_id = id AND user2_id = %s) OR (user_id = %s AND user2_id = id)
             WHERE username ILIKE %s
             AND id != %s;
-        """, [user_id, user_id, term, user_id])
+        """, [term, user_id])
 
         perfect_match = db.one()
 
         db.execute("""
-            SELECT id, username, status, user_id AS sent_by
-            FROM users
-            LEFT JOIN friendships
-                ON (user_id = id AND user2_id = %s) OR (user_id = %s AND user2_id = id)
+            SELECT id, username
+            FROM users 
             WHERE username NOT ILIKE %s 
             AND username ILIKE %s
             AND id != %s;
-        """, [user_id, user_id, term, f"{term}%", user_id])
+        """, [term, f"{term}%", user_id])
 
         prefix_matches = db.all()
 
         db.execute("""
-            SELECT id, username, status, user_id AS sent_by
-            FROM users
-            LEFT JOIN friendships
-                ON (user_id = id AND user2_id = %s) OR (user_id = %s AND user2_id = id)
+            SELECT id, username
+            FROM users 
             WHERE username NOT ILIKE %s 
             AND username NOT ILIKE %s
             AND username ILIKE %s
             AND id != %s;
-        """, [user_id, user_id, term, f"{term}%", f"%{term}%", user_id])
+        """, [term, f"{term}%", f"%{term}%", user_id])
 
         partial_matches = db.all()
-    
-    users = [RequestBean(perfect_match)] if perfect_match else []
-    users = users + [RequestBean(x) for x in prefix_matches]
-    users = users + [RequestBean(x) for x in partial_matches]
+
+    users = [SearchResultBean(perfect_match)] if perfect_match else []
+    users = users + [SearchResultBean(x) for x in prefix_matches]
+    users = users + [SearchResultBean(x) for x in partial_matches]
 
     return users
 
@@ -125,4 +131,4 @@ def token(user):
         "exp": datetime.datetime.utcnow() + datetime.timedelta(days=1, hours=0, minutes=0, seconds=0),
     }
 
-    return jwt.encode(payload, "secret", algorithm="HS256")
+    return jwt.encode(payload, config('JWT_TOKEN_SECRET'), algorithm="HS256")

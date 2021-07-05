@@ -27,8 +27,16 @@
             :key="member.id"
             class="py-1 px-2 flex items-center justify-between"
           >
-            <h2 class="text-xl">{{ member.username }}</h2>
-            <button v-if="isOwner" class="button3" @click="remove(member.id)">
+            <h2 class="text-xl">
+              {{ member.username
+              }}<span v-if="member.id == user.id" class="text-sm"> (you) </span>
+            </h2>
+
+            <button
+              v-if="isOwner && member.id != user.id"
+              class="button3"
+              @click="remove(member.id)"
+            >
               Remove
             </button>
           </div>
@@ -92,18 +100,23 @@ export default {
     members: Array,
   },
   setup(props, { emit }) {
+    const store = useStore();
+    const router = useRouter();
+
+    const user = store.state.user;
+    const friends = computed(() => store.state.friendsModule.friends);
+    const socket = store.state.socket;
+
     const selectedIds = ref([]);
     const membersFilter = ref("");
     const friendsFilter = ref("");
-    const store = useStore();
-    const router = useRouter();
-    const user = store.state.user;
-    const friends = computed(() => store.state.friends);
 
-    const isOwner = computed(() => user.id === props.group.owner);
+    const isOwner = computed(() =>
+      props.group ? user.id === props.group.owner : false
+    );
     const membersFiltered = computed(() =>
       props.members.filter((m) =>
-        m.username.toLowerCase().includes(membersFilter.value)
+        !!m
       )
     );
     const friendsFiltered = computed(() =>
@@ -124,11 +137,16 @@ export default {
     };
 
     const leave = async function () {
-      await axios.delete("/api/v1/group/member", {
-        data: { user_id: user.id, group_id: props.group.id },
-      });
-      store.dispatch("removeGroup", props.group.id);
-      router.push("/home");
+      try {
+        await axios.delete("/api/v1/group/member", {
+          data: { user_id: user.id, group_id: props.group.id },
+        });
+        socket.emit("leaveGroup", props.group.id);
+        store.dispatch("removeGroup", props.group.id);
+        router.push("/home");
+      } catch (error) {
+        console.error(error);
+      }
     };
 
     const remove = function (id) {
@@ -140,11 +158,16 @@ export default {
     };
 
     const deleteGroup = async function () {
-      await axios.delete("/api/v1/group", {
-        data: { group_id: props.group.id },
-      });
-      store.dispatch("removeGroup", props.group.id);
-      router.push("/home");
+      try {
+        await axios.delete("/api/v1/group", {
+          data: { group_id: props.group.id },
+        });
+        socket.emit("removeGroup", props.group.id);
+        store.dispatch("removeGroup", props.group.id);
+        router.push("/home");
+      } catch (error) {
+        console.error(error);
+      }
     };
 
     return {
@@ -158,6 +181,7 @@ export default {
       friendsFilter,
       friendsFiltered,
       add,
+      user,
     };
   },
 };

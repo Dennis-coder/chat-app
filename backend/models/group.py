@@ -1,6 +1,7 @@
-from models.db_handler import DBHandler, Transaction
-from models.user import UserBean, get as get_user
+from models.db_handler import DBHandler
 from models.helpers import parse_timestamp
+from models.group_message import get_all as get_all_group_messages
+import models.group_member as GroupMember
 
 
 def GroupBean(params):
@@ -24,6 +25,21 @@ def get(group_id):
     return GroupBean(group)
 
 
+def get_with_messages(group_id):
+    with DBHandler() as db:
+        db.execute("""
+            SELECT *
+            FROM groups
+            WHERE id = %s;
+        """, [group_id])
+
+        group = db.one()
+    group = GroupBean(group)
+    group['messages'] = get_all_group_messages(group['id'])
+    group['members'] = GroupMember.get_all(group['id'])
+    return group
+
+
 def create(name, owner):
     with DBHandler() as db:
         db.execute("""
@@ -33,15 +49,15 @@ def create(name, owner):
         """, [name, owner])
 
         id = db.one()[0]
-    return get(id)
+    return id
 
 
 def new(name, owner, users):
-    group = create(name, owner)
-    add_member(group["id"], owner)
+    group_id = create(name, owner)
+    GroupMember.add(group_id, owner)
     for user in users:
-        add_member(group["id"], user)
-    return group
+        GroupMember.add(group_id, user)
+    return get_with_messages(group_id)
 
 
 def update_name(group_id, name):
@@ -93,67 +109,26 @@ def get_all(user_id):
     return groups
 
 
-def get_members(group_id):
+def get_all_with_messages(user_id):
     with DBHandler() as db:
         db.execute("""
-            SELECT id, username, role
+            SELECT id, name, last_interaction, owner
             FROM group_memberships
-            LEFT JOIN users
-                ON user_id = id
-            WHERE group_id = %s;
-        """, [group_id])
+            LEFT JOIN groups
+                ON group_id = id
+            WHERE user_id = %s;
+        """, [user_id])
 
         from_db = db.all()
-    members = []
-    for member in from_db:
-        members.append(UserBean(member))
+    groups = []
+    if from_db:
+        for group in from_db:
+            group = GroupBean(group)
+            group['messages'] = get_all_group_messages(group['id'])
+            group['members'] = GroupMember.get_all(group['id'])
+            groups.append(group)
 
-    return members
-
-
-def add_member(group_id, user_id):
-    with DBHandler() as db:
-        db.execute("""
-            INSERT INTO group_memberships(group_id, user_id, joined_at)
-            VALUES(%s, %s, 'now');
-        """, [group_id, user_id])
-    return get_user(user_id)
-
-
-def is_member(group_id, user_id):
-    with DBHandler() as db:
-        db.execute("""
-            SELECT id, username, role
-            FROM group_memberships
-            LEFT JOIN users
-                ON user_id = id
-            WHERE group_id = %s
-			AND user_id = %s;
-        """, [group_id, user_id])
-        user = db.one()
-    return not not user
-
-
-def remove_member(group_id, user_id):
-    with Transaction() as db:
-        db.execute("""
-            DELETE FROM group_memberships
-            WHERE group_id = %s AND user_id = %s
-        """, [group_id, user_id])
-        group = get(group_id)
-        if group["owner"] == user_id:
-            db.execute("""
-                SELECT * 
-                FROM group_memberships
-                WHERE group_id = %s
-            """, [group_id])
-            id = db.one()[0]
-            db.execute("""
-                UPDATE groups
-                SET owner = %s
-                WHERE id = %s;
-            """, [id, group_id])
-    return "User removed from group"
+    return groups
 
 
 def update_last_interaction(group_id):
@@ -164,3 +139,15 @@ def update_last_interaction(group_id):
             WHERE id = %s;
         """, [group_id])
     return "Last interaction has been updated"
+
+
+def is_member(group_id, user_id):
+    with DBHandler() as db:
+        db.execute("""
+            SELECT user_id
+            FROM group_memberships
+            WHERE group_id = %s
+			AND user_id = %s;
+        """, [group_id, user_id])
+        user = db.one()
+    return not not user

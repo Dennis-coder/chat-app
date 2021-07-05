@@ -7,7 +7,7 @@
       @toggleSettings="toggleSettings"
     />
     <div
-      v-if="messages && !loadingMessages"
+      v-if="group"
       class="
         max-w-sm
         w-full
@@ -74,7 +74,7 @@ import axios from "axios";
 import Message from "../components/Message.vue";
 import NavbarLite from "../components/NavbarLite.vue";
 import GroupSettingsModal from "../components/GroupSettingsModal.vue";
-import { ref, nextTick, onUnmounted } from "vue";
+import { ref, nextTick, computed } from "vue";
 import { useStore } from "vuex";
 import { useRoute, useRouter } from "vue-router";
 
@@ -85,57 +85,25 @@ export default {
     GroupSettingsModal,
   },
   setup() {
-    const group = ref(null);
-    const members = ref(null);
-    const messages = ref(null);
+    const route = useRoute();
+    const store = useStore();
+    const router = useRouter();
+
     const messagesDiv = ref(null);
 
     const text = ref("");
     const messagesHeight = ref(0);
-    const loadingMessages = ref(true);
     const showSettings = ref(false);
 
-    const route = useRoute();
-    const store = useStore();
-    const router = useRouter();
+    const group = computed(() =>
+      store.state.groupsModule.groups.find(
+        (group) => group.id === parseInt(route.params.id)
+      )
+    );
+    const members = computed(() => (group.value ? group.value.members : []));
+    const messages = computed(() => (group.value ? group.value.messages : []));
     const user = ref(store.state.user);
     const socket = store.state.socket;
-
-    socket.emit("join-group", route.params.id);
-
-    socket.on(`group message`, (newMessage) => {
-      messages.value.push(newMessage);
-      scrollDown();
-    });
-
-    const loadData = async function () {
-      if (store.state.groups.length > 0) {
-        group.value = store.state.groups.find(
-          (group) => group.id === parseInt(route.params.id)
-        );
-      } else {
-        group.value = (
-          await axios.get("/api/v1/group", {
-            params: { group_id: route.params.id },
-          })
-        ).data;
-      }
-
-      messages.value = (
-        await axios.get("/api/v1/group/messages", {
-          params: { group_id: route.params.id },
-        })
-      ).data;
-
-      members.value = (
-        await axios.get("/api/v1/group/members", {
-          params: { group_id: route.params.id },
-        })
-      ).data;
-
-      loadingMessages.value = false;
-      resizeEvent();
-    };
 
     const sendMessage = async function () {
       let newMessage = (
@@ -144,8 +112,8 @@ export default {
           group_id: group.value.id,
         })
       ).data;
-      messages.value.push(newMessage);
-      socket.emit(`group message`, newMessage);
+      store.dispatch("addGroupMessage", newMessage);
+      socket.emit(`groupMessage`, newMessage);
       text.value = "";
       scrollDown();
     };
@@ -174,43 +142,44 @@ export default {
     };
 
     const removeUserFromGroup = async function (id) {
-      await axios.delete("/api/v1/group/member", {
-        data: { user_id: id, group_id: group.value.id },
-      });
-      let index = members.value.findIndex((m) => m.id === id);
-      members.value.splice(index, 1);
+      try {
+        await axios.delete("/api/v1/group/member", {
+          data: { user_id: id, group_id: group.value.id },
+        });
+        let index = members.value.findIndex((m) => m.id === id);
+        members.value.splice(index, 1);
+        socket.emit("removeUserFromGroup", group.value.id, id);
+      } catch (error) {
+        console.error(error)
+      }
     };
 
     const addUserToGroup = async function (id) {
-      let member = (
-        await axios.post("/api/v1/group/member", {
-          user_id: id,
-          group_id: group.value.id,
-        })
-      ).data;
-      members.value.push(member);
+      try {
+        let member = (
+          await axios.post("/api/v1/group/member", {
+            user_id: id,
+            group_id: group.value.id,
+          })
+        ).data;
+        store.dispatch('addUserToGroup', {groupId: group.value.id, user: member})
+        socket.emit('addUserToGroup', group.value, member)
+      } catch (error) {
+        console.error(error)
+      }
     };
 
-    loadData();
     window.addEventListener("resize", resizeEvent);
     nextTick(() => {
       resizeEvent();
       scrollDown();
     });
 
-    onUnmounted(() => {
-      socket.emit("leave-group", group.value.id);
-    });
-
     return {
       group,
-      members,
       user,
-      messages,
       text,
       messagesHeight,
-      loadingMessages,
-      socket,
       messagesDiv,
       sendMessage,
       toggleSettings,
@@ -218,6 +187,8 @@ export default {
       back,
       removeUserFromGroup,
       addUserToGroup,
+      members,
+      messages,
     };
   },
 };

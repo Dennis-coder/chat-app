@@ -7,7 +7,7 @@
       @toggleSettings="toggleSettings"
     />
     <div
-      v-if="messages && !loadingMessages"
+      v-if="friend"
       class="
         max-w-sm
         w-full
@@ -71,7 +71,7 @@ import axios from "axios";
 import Message from "../components/Message.vue";
 import NavbarLite from "../components/NavbarLite.vue";
 import FriendSettingsModal from "../components/FriendSettingsModal.vue";
-import { ref, nextTick } from "vue";
+import { ref, nextTick, computed } from "vue";
 import { useStore } from "vuex";
 import { useRoute, useRouter } from "vue-router";
 
@@ -82,48 +82,25 @@ export default {
     FriendSettingsModal,
   },
   setup() {
-    const friend = ref(null);
-    const messages = ref(null);
-    const messagesDiv = ref(null);
-
-    const text = ref("");
-    const messagesHeight = ref(0);
-    const loadingMessages = ref(true);
-    const showSettings = ref(false);
-
     const route = useRoute();
     const store = useStore();
     const router = useRouter();
-    const user = ref(store.state.user);
+
+    const messagesDiv = ref(null);
+    const text = ref("");
+    const messagesHeight = ref(0);
+    const showSettings = ref(false);
+
+    const user = store.state.user;
+    const friend = computed(() =>
+      store.state.friendsModule.friends.find(
+        (friend) => friend.id === parseInt(route.params.id)
+      )
+    );
+    const messages = computed(() =>
+      friend.value ? friend.value.messages : []
+    );
     const socket = store.state.socket;
-
-    socket.on(`incoming message`, (newMessage) => {
-      if (newMessage.senderId === friend.value.id) {
-        messages.value.push(newMessage);
-        scrollDown();
-      }
-    });
-
-    const loadData = async function () {
-      if (store.state.friends.length > 0) {
-        friend.value = store.state.friends.find(
-          (friend) => friend.id === parseInt(route.params.id)
-        );
-      } else {
-        friend.value = (
-          await axios.get("/api/v1/friend", {
-            params: { friend_id: route.params.id },
-          })
-        ).data;
-      }
-      messages.value = (
-        await axios.get("/api/v1/friend/messages", {
-          params: { friend_id: route.params.id },
-        })
-      ).data;
-
-      loadingMessages.value = false;
-    };
 
     const sendMessage = async function () {
       let newMessage = (
@@ -132,14 +109,14 @@ export default {
           reciever_id: friend.value.id,
         })
       ).data;
-      messages.value.push(newMessage);
-      socket.emit("chat message", newMessage);
+      store.dispatch("addMessage", newMessage);
+      socket.emit("chatMessage", newMessage);
       text.value = "";
       scrollDown();
     };
 
     const resizeEvent = function () {
-      messagesHeight.value = window.innerHeight - 88;
+      messagesHeight.value = window.innerHeight - 48;
     };
 
     const scrollDown = async function () {
@@ -162,7 +139,6 @@ export default {
     };
 
     window.addEventListener("resize", resizeEvent);
-    loadData();
     nextTick(() => {
       resizeEvent();
       scrollDown();
@@ -171,16 +147,14 @@ export default {
     return {
       friend,
       user,
-      messages,
       text,
       messagesHeight,
-      loadingMessages,
-      socket,
       messagesDiv,
       sendMessage,
       toggleSettings,
       showSettings,
       back,
+      messages,
     };
   },
 };

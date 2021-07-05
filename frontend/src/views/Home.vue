@@ -1,6 +1,11 @@
 <template>
   <div class="w-full h-full">
-    <Navbar />
+    <Navbar
+      @toggleSearchModal="toggleSearchModal"
+      @toggleGroupchatModal="toggleGroupchatModal"
+      @toggleSettings="toggleSettings"
+      @toggleAdmin="toggleAdmin"
+    />
     <div class="w-full flex items-center flex-col">
       <div class="w-full flex flex-col items-center bg-gray-70">
         <div class="w-full">
@@ -77,26 +82,37 @@
         </div>
       </div>
     </div>
+    <SearchModal v-if="showSearchModal" @close="toggleSearchModal" />
+    <GroupchatModal v-if="showGroupchatModal" @close="toggleGroupchatModal" />
   </div>
 </template>
 
 <script>
 import Navbar from "../components/Navbar.vue";
-import axios from "axios";
+import SearchModal from "../components/SearchModal.vue";
+import GroupchatModal from "../components/GroupchatModal.vue";
 import { ref, computed, nextTick } from "vue";
 import { useStore } from "vuex";
+import { useRouter } from "vue-router";
 
 export default {
   components: {
     Navbar,
+    SearchModal,
+    GroupchatModal,
   },
   setup() {
     const height = ref(0);
     const searchTerm = ref("");
+    const showSearchModal = ref(false);
+    const showGroupchatModal = ref(false);
+    const showSettings = ref(false);
+    const showAdmin = ref(false);
     const store = useStore();
+    const router = useRouter();
     const tab = computed(() => store.state.tab);
-    const friends = computed(() => store.state.friends);
-    const groups = computed(() => store.state.groups);
+    const friends = computed(() => store.state.friendsModule.friends);
+    const groups = computed(() => store.state.groupsModule.groups);
 
     const friendsSorted = computed(() =>
       [...friends.value].sort((a, b) =>
@@ -134,14 +150,6 @@ export default {
       )
     );
 
-    const loadData = async function () {
-      store.dispatch(
-        "setFriends",
-        (await axios.get("/api/v1/friend/all")).data
-      );
-      store.dispatch("setGroups", (await axios.get("/api/v1/group/all")).data);
-    };
-
     const resizeEvent = function () {
       height.value = window.innerHeight - 144;
     };
@@ -150,7 +158,22 @@ export default {
       store.dispatch("setTab", tab);
     };
 
-    loadData();
+    const toggleSearchModal = function () {
+      showSearchModal.value = !showSearchModal.value;
+    };
+
+    const toggleGroupchatModal = function () {
+      showGroupchatModal.value = !showGroupchatModal.value;
+    };
+
+    const toggleSettings = function () {
+      router.push("/settings");
+    };
+
+    const toggleAdmin = function () {
+      router.push("/admin");
+    };
+
     window.addEventListener("resize", resizeEvent);
     nextTick(() => {
       resizeEvent();
@@ -164,7 +187,15 @@ export default {
       friendsFiltered,
       groupsFiltered,
       height,
+      showSearchModal,
+      showGroupchatModal,
+      showSettings,
+      showAdmin,
       changeTab,
+      toggleSearchModal,
+      toggleGroupchatModal,
+      toggleSettings,
+      toggleAdmin,
     };
   },
 };

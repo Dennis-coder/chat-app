@@ -101,11 +101,12 @@ router.beforeEach((to, from, next) => {
   }
 });
 
-const loggedIn = function() {
-  let user = jwt_decode(localStorage.getItem('websnap.user'))
+const loggedIn = function () {
+  let user = localStorage.getItem('websnap.user')
   if (!user) {
     return false
   }
+  user = jwt_decode(user)
   return user.exp * 1000 > Date.now()
 }
 

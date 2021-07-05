@@ -3,8 +3,12 @@
     <NavbarLite :text="'Admin lounge'" :settings="false" @back="back" />
     <div class="center-me flex-col pt-4">
       <div class="w-11/12">
-				<h4 class="text-lg text-center">Reports</h4>
-        <div v-if="report" class="bg-gray-70 p-2 rounded-lg max-h-48 overflow-auto">
+        <h4 class="text-lg text-center">Reports</h4>
+        <div
+          v-if="report"
+          ref="reportDiv"
+          class="bg-gray-70 p-2 rounded-lg max-h-48 overflow-auto"
+        >
           <h4 class="text-lg underline">Plaintiff</h4>
           <p>{{ report.plaintiff.username }}</p>
           <h4 class="text-lg underline">Defendant</h4>
@@ -15,11 +19,11 @@
           <p>{{ report.status }}</p>
           <h4 class="text-lg underline">Created at</h4>
           <p>{{ report.created_at }}</p>
-					<button class="button3" @click="deleteReport">Delete</button>
+          <button class="button3" @click="deleteReport">Delete</button>
         </div>
-				<div v-else class="bg-gray-70 p-2 rounded-lg">
-					<p class="text-center">No reports left</p>
-				</div>
+        <div v-else class="bg-gray-70 p-2 rounded-lg">
+          <p class="text-center">No reports left</p>
+        </div>
       </div>
     </div>
   </div>
@@ -38,6 +42,7 @@ export default {
   setup() {
     const router = useRouter();
     const reports = ref([]);
+    const reportDiv = ref(null);
 
     const report = computed(() =>
       reports.value.length > 0 ? reports.value[0] : null
@@ -51,19 +56,23 @@ export default {
       reports.value = (await axios.get("/api/v1/report/all")).data;
     };
 
-		const deleteReport = async function () {
-			await axios.delete("/api/v1/report", { data: {
-				report_id: report.value.id
-			} })
-			reports.value.shift()
-		}
+    const deleteReport = async function () {
+      await axios.delete("/api/v1/report", {
+        data: {
+          report_id: report.value.id,
+        },
+      });
+      reports.value.shift();
+      reportDiv.value.scrollTop = 0;
+    };
 
     loadData();
 
     return {
+      reportDiv,
       report,
       back,
-			deleteReport,
+      deleteReport,
     };
   },
 };

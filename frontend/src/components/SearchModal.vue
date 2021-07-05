@@ -28,6 +28,7 @@
           @add="add"
           @accept="accept"
           @remove="remove"
+          @deny="deny"
         />
       </div>
       <div v-else-if="term.length > 0" class="z-10 bg-gray-40 p-2">
@@ -52,6 +53,7 @@
           @add="add"
           @accept="accept"
           @remove="remove"
+          @deny="deny"
         />
       </div>
     </div>
@@ -60,7 +62,7 @@
 
 <script>
 import axios from "axios";
-import { nextTick, ref } from "vue";
+import { computed, nextTick, ref } from "vue";
 import { useStore } from "vuex";
 import SearchResult from "./SearchResult.vue";
 import Modal from "./Modal.vue";
@@ -70,11 +72,13 @@ export default {
     modal: Modal,
   },
   setup() {
+    const store = useStore();
+
+    const requests = computed(() => store.state.requestsModule.requests);
+    const socket = store.state.socket;
+
     const results = ref([]);
     const term = ref("");
-    const store = useStore();
-    const user = store.state.user;
-    const requests = ref(null);
     const input = ref(null);
 
     const search = async function () {
@@ -83,51 +87,52 @@ export default {
           await axios.get("/api/v1/user/find", {
             params: { term: term.value },
           })
-        ).data;
+        ).data.filter((r) => r.id != store.state.user.id);
       } else {
         results.value = [];
       }
     };
 
-    const add = async function (friend_id) {
-      await axios.post("/api/v1/friend", {
-        friend_id,
+    const add = async function (result) {
+      await axios.post("/api/v1/friend/request", {
+        friend_id: result.id,
       });
-      let result = results.value.find((result) => result.id === friend_id);
-      result.status = 1;
-      result.sent_by = user.id;
+      store.dispatch("addPendingRequest", result);
+      socket.emit("sentRequest", result.id);
     };
 
-    const accept = async function (friend_id) {
+    const accept = async function (friendId) {
       let friend = (
-        await axios.put("/api/v1/friend", {
-          friend_id,
+        await axios.put("/api/v1/friend/request", {
+          friend_id: friendId,
         })
       ).data;
       store.dispatch("addFriend", friend);
-
-      friend = requests.value.find((request) => request.id === friend_id);
-      if (!friend) {
-        friend = results.value.find((result) => result.id === friend_id);
-      }
-      friend.status = 0;
+      store.dispatch("removeRequest", friendId);
+      socket.emit("acceptedRequest", friendId);
     };
 
-    const remove = async function (friend_id) {
-      await axios.delete("/api/v1/friend", {
-        data: { friend_id },
+    const deny = async function (pending, friendId) {
+      await axios.delete("/api/v1/friend/request", {
+        data: { friend_id: friendId },
       });
-      store.dispatch("removeFriend", friend_id);
-      let result = results.value.find((result) => result.id === friend_id);
-      result.status = null;
-      result.sent_by = null;
+      if (pending) {
+        store.dispatch("removePendingRequest", friendId);
+        socket.emit("withdrewRequest", friendId);
+      } else {
+        store.dispatch("removeRequest", friendId);
+        socket.emit("deniedRequest", friendId);
+      }
     };
 
-    const fetchRequests = async function () {
-      requests.value = (await axios.get("/api/v1/friend/requests")).data;
+    const remove = async function (friendId) {
+      await axios.delete("/api/v1/friend", {
+        data: { friend_id: friendId },
+      });
+      store.dispatch("removeFriend", friendId);
+      socket.emit("removedFriend", friendId);
     };
 
-    fetchRequests();
     nextTick(() => {
       input.value.focus();
     });
@@ -140,6 +145,7 @@ export default {
       add,
       accept,
       remove,
+      deny,
       input,
     };
   },

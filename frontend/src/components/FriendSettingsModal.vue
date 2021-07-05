@@ -23,12 +23,19 @@ export default {
     const store = useStore();
     const router = useRouter();
 
+    const socket = store.state.socket;
+
     const remove = async function () {
-      await axios.delete("/api/v1/friend", {
-        data: { friend_id: props.friend.id },
-      });
-      store.dispatch("removeFriend", props.friend.id);
-      router.push("/home");
+      try {
+        await axios.delete("/api/v1/friend", {
+          data: { friend_id: props.friend.id },
+        });
+        store.dispatch("removeFriend", props.friend.id);
+        socket.emit("removedFriend", props.friend.id);
+        router.push("/home");
+      } catch (error) {
+        console.error(error);
+      }
     };
 
     return { remove };

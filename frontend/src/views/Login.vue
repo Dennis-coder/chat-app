@@ -49,12 +49,12 @@ export default {
     Navbar,
   },
   setup() {
+    const store = useStore();
+    const router = useRouter();
+
     const username = ref("");
     const password = ref("");
     const error = ref("");
-
-    const store = useStore();
-    const router = useRouter();
 
     const buttonStateActive = computed(() => username.value && password.value);
 
@@ -73,7 +73,13 @@ export default {
       }
     };
 
-    return { username, password, error, buttonStateActive, login };
+    return {
+      username,
+      password,
+      error,
+      buttonStateActive,
+      login,
+    };
   },
 };
 </script>

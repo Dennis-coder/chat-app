@@ -6,7 +6,7 @@ def MessageBean(params):
     return {
         "id": params[0],
         "text": params[1],
-        "sent_at": parse_timestamp(params[2]),
+        "timestamp": parse_timestamp(params[2]),
         "senderId": params[3],
         "recieverId": params[4]
     }

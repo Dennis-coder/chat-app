@@ -2,11 +2,12 @@ from models.db_handler import DBHandler
 from models.helpers import parse_timestamp
 import models.group as Group
 
+
 def GroupMessageBean(params):
     return {
         "id": params[0],
         "text": params[1],
-        "sent_at": parse_timestamp(params[2]),
+        "timestamp": parse_timestamp(params[2]),
         "senderId": params[3],
         "groupId": params[4]
     }
@@ -22,6 +23,7 @@ def get(id):
         message = db.one()
     return GroupMessageBean(message)
 
+
 def get_all(group_id):
     with DBHandler() as db:
         db.execute("""
@@ -29,7 +31,7 @@ def get_all(group_id):
             FROM group_messages
             WHERE group_id = %s;
         """, [group_id])
-        
+
         from_db = db.all()
     messages = []
     if from_db:
@@ -37,6 +39,7 @@ def get_all(group_id):
             messages.append(GroupMessageBean(message))
 
     return messages
+
 
 def new(text, sender_id, group_id):
     with DBHandler() as db:
